@@ -1,0 +1,34 @@
+{
+  "butterfly--clean-minimal": {
+    "image": "/api/assets/butterfly--clean-minimal.webp",
+    "generated": true
+  },
+  "gradient-waves--cartoon": {
+    "image": "/api/assets/gradient-waves--cartoon.webp",
+    "generated": true
+  },
+  "birthday-card--retro": {
+    "image": "/api/assets/birthday-card--retro.webp",
+    "generated": true
+  },
+  "sneaker--photorealistic": {
+    "image": "/api/assets/sneaker--photorealistic.webp",
+    "generated": true
+  },
+  "tennis-racket--retro": {
+    "image": "/api/assets/tennis-racket--retro.webp",
+    "generated": true
+  },
+  "tennis-racket--photorealistic": {
+    "image": "/api/assets/tennis-racket--photorealistic.webp",
+    "generated": true
+  },
+  "birthday-card--risograph": {
+    "image": "/api/assets/birthday-card--risograph.webp",
+    "generated": true
+  },
+  "birthday-card--watercolor": {
+    "image": "/api/assets/birthday-card--watercolor.webp",
+    "generated": true
+  }
+}

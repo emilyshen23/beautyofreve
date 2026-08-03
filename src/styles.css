@@ -1,0 +1,165 @@
+:root {
+  --line: rgba(255, 255, 255, 0.12);
+  --tab-size: 26px;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --fade-in: 260ms;
+  --fade-out: 160ms;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: #000;
+}
+
+body {
+  min-height: 100dvh;
+  color: #fff;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.plate {
+  display: grid;
+  grid-template-columns: var(--tab-size) repeat(8, minmax(0, 1fr));
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 40px 40px 80px;
+}
+
+.corner {
+  height: var(--tab-size);
+}
+
+/* Labels — white tabs breaking the black field */
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #000;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.tab span {
+  white-space: nowrap;
+  padding: 0 6px;
+}
+
+.tab-col {
+  height: var(--tab-size);
+  border-left: 1px solid #000;
+}
+
+.tab-row {
+  width: var(--tab-size);
+  border-top: 1px solid #000;
+}
+
+.tab-row span {
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+}
+
+/* Cells */
+
+.cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  overflow: hidden;
+  appearance: none;
+}
+
+.cell:nth-child(9n + 9) {
+  border-right: 1px solid var(--line);
+}
+
+.plate > .cell:nth-last-child(-n + 8) {
+  border-bottom: 1px solid var(--line);
+}
+
+.cell:focus-visible {
+  outline: 1px solid #fff;
+  outline-offset: -1px;
+}
+
+.cell-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity var(--fade-out) var(--ease-out);
+}
+
+/* Reveal is a flicker, not a lingering image: in slow, out faster. */
+@media (hover: hover) and (pointer: fine) {
+  .cell:hover .cell-img {
+    opacity: 1;
+    transition-duration: var(--fade-in);
+  }
+}
+
+.cell[data-status='loading'] .cell-img {
+  opacity: 0;
+  transition-duration: var(--fade-out);
+}
+
+/* Loading — a slow sweep in the black/gray palette, no spinner */
+
+.cell-shimmer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.09) 50%,
+    transparent 80%
+  );
+  background-size: 250% 100%;
+  transition: opacity var(--fade-out) var(--ease-out);
+  pointer-events: none;
+}
+
+.cell[data-status='loading'] .cell-shimmer {
+  opacity: 1;
+  animation: sweep 1.4s linear infinite;
+}
+
+.cell[data-status='error'] {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+@keyframes sweep {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell-shimmer {
+    animation: none;
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
