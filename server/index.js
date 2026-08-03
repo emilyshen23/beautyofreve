@@ -126,6 +126,8 @@ if (existsSync(join(root, 'dist'))) {
   app.use(express.static(join(root, 'dist')))
 }
 
-// Hosts (Render, Railway, Fly) inject PORT; 8787 is the local dev default.
-const port = process.env.PORT ?? process.env.REVE_SERVER_PORT ?? 8787
+/* REVE_SERVER_PORT wins so dev can pin 8787: some dev tooling exports PORT
+   for the front end, and the API must not land on Vite's port. Hosts
+   (Render, Railway, Fly) set only PORT. */
+const port = process.env.REVE_SERVER_PORT ?? process.env.PORT ?? 8787
 app.listen(port, () => console.log(`reve backend listening on ${port}`))
