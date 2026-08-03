@@ -41,56 +41,45 @@ export default function App() {
 
   return (
     <main className="plate">
-      <div className="corner" />
-
-      {STYLES.map((style, i) => (
-        <Tab key={style.id} className="tab-col" label={style.label} index={i} />
-      ))}
-
-      {SUBJECTS.map((subject, i) => (
-        <Row key={subject.id} subject={subject} index={i} cells={cells} onGenerate={generate} />
+      {STYLES.map((style, row) => (
+        <Row key={style.id} style={style} row={row} cells={cells} onGenerate={generate} />
       ))}
     </main>
   )
 }
 
-function Tab({ className, label, index }: { className: string; label: string; index: number }) {
-  return (
-    <motion.div
-      className={`tab ${className}`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4, delay: index * 0.014, ease: [0.23, 1, 0.32, 1] }}
-    >
-      <span>{label}</span>
-    </motion.div>
-  )
-}
-
 type RowProps = {
-  subject: { id: string; label: string }
-  index: number
+  style: { id: string; label: string }
+  row: number
   cells: Record<string, CellState>
   onGenerate: (subject: string, style: string) => void
 }
 
-function Row({ subject, index, cells, onGenerate }: RowProps) {
+function Row({ style, row, cells, onGenerate }: RowProps) {
   return (
     <>
-      <Tab className="tab-row" label={subject.label} index={index} />
+      <motion.div
+        className="tab"
+        style={{ top: `calc(var(--cell) * ${row})` }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: row * 0.03, ease: [0.23, 1, 0.32, 1] }}
+      >
+        <span>{style.label}</span>
+      </motion.div>
 
-      {STYLES.map((style) => {
+      {SUBJECTS.map((subject) => {
         const state = cells[cellKey(subject.id, style.id)]
         return (
           <button
-            key={style.id}
+            key={subject.id}
             type="button"
             className="cell"
             data-status={state?.status ?? 'idle'}
             aria-label={`${subject.label}, ${style.label} — click to generate`}
             onClick={() => onGenerate(subject.id, style.id)}
           >
-            {state?.image && <img className="cell-img" src={state.image} alt="" loading="lazy" />}
+            {state?.image && <img className="cell-img" src={state.image} alt="" />}
             <span className="cell-shimmer" aria-hidden="true" />
           </button>
         )

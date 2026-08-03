@@ -1,9 +1,26 @@
+/* Forma DJR Deck resolves from the locally installed family. The copies on
+   this machine are trial ("-Testing") cuts, which aren't licensed for
+   redistribution or web embedding — so nothing is bundled. To ship the font
+   on a deployed site, drop licensed .woff2 files in src/fonts/ and add
+   @font-face rules pointing at them. */
+
 :root {
   --line: rgba(255, 255, 255, 0.12);
-  --tab-size: 26px;
+  --gutter: 44px;
+  --tab: 24px;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --fade-in: 260ms;
-  --fade-out: 160ms;
+
+  /* Hover trail: an image snaps in, holds, then fades slowly once you leave.
+     Sweeping across cells leaves a cascade rather than a single reveal. */
+  --appear: 90ms;
+  --linger: 450ms;
+  --fade: 650ms;
+
+  /* 16 columns x 8 rows, sized to whichever viewport axis binds first. */
+  --cell: min(
+    calc((100vw - var(--gutter) * 2) / 16),
+    calc((100vh - var(--gutter) * 2) / 8)
+  );
 }
 
 * {
@@ -17,64 +34,54 @@ html {
 }
 
 body {
+  display: grid;
+  place-items: center;
   min-height: 100dvh;
+  overflow: hidden;
   color: #fff;
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  font-family: 'Forma DJR Deck', ui-sans-serif, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 .plate {
+  position: relative;
   display: grid;
-  grid-template-columns: var(--tab-size) repeat(8, minmax(0, 1fr));
-  max-width: 1360px;
-  margin: 0 auto;
-  padding: 40px 40px 80px;
+  grid-template-columns: repeat(16, var(--cell));
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
-.corner {
-  height: var(--tab-size);
-}
-
-/* Labels — white tabs breaking the black field */
+/* Style labels — white tabs sitting outside the plate so the grid itself
+   stays optically centred. */
 
 .tab {
+  position: absolute;
+  right: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: var(--tab);
+  height: var(--cell);
   background: #fff;
   color: #000;
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   overflow: hidden;
 }
 
 .tab span {
-  white-space: nowrap;
-  padding: 0 6px;
-}
-
-.tab-col {
-  height: var(--tab-size);
-  border-left: 1px solid #000;
-}
-
-.tab-row {
-  width: var(--tab-size);
-  border-top: 1px solid #000;
-}
-
-.tab-row span {
   writing-mode: vertical-rl;
   rotate: 180deg;
+  white-space: nowrap;
 }
 
 /* Cells */
 
 .cell {
   position: relative;
-  aspect-ratio: 1 / 1;
+  width: var(--cell);
+  height: var(--cell);
   border: 0;
   border-top: 1px solid var(--line);
   border-left: 1px solid var(--line);
@@ -83,14 +90,6 @@ body {
   cursor: pointer;
   overflow: hidden;
   appearance: none;
-}
-
-.cell:nth-child(9n + 9) {
-  border-right: 1px solid var(--line);
-}
-
-.plate > .cell:nth-last-child(-n + 8) {
-  border-bottom: 1px solid var(--line);
 }
 
 .cell:focus-visible {
@@ -105,20 +104,14 @@ body {
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity var(--fade-out) var(--ease-out);
+  transition: opacity var(--fade) var(--ease-out) var(--linger);
 }
 
-/* Reveal is a flicker, not a lingering image: in slow, out faster. */
 @media (hover: hover) and (pointer: fine) {
   .cell:hover .cell-img {
     opacity: 1;
-    transition-duration: var(--fade-in);
+    transition: opacity var(--appear) var(--ease-out) 0ms;
   }
-}
-
-.cell[data-status='loading'] .cell-img {
-  opacity: 0;
-  transition-duration: var(--fade-out);
 }
 
 /* Loading — a slow sweep in the black/gray palette, no spinner */
@@ -134,13 +127,18 @@ body {
     transparent 80%
   );
   background-size: 250% 100%;
-  transition: opacity var(--fade-out) var(--ease-out);
+  transition: opacity 160ms var(--ease-out);
   pointer-events: none;
 }
 
 .cell[data-status='loading'] .cell-shimmer {
   opacity: 1;
   animation: sweep 1.4s linear infinite;
+}
+
+.cell[data-status='loading'] .cell-img {
+  opacity: 0;
+  transition: opacity 160ms var(--ease-out) 0ms;
 }
 
 .cell[data-status='error'] {

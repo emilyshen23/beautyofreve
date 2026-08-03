@@ -1,76 +1,32 @@
 import express from 'express'
-import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
+import { readdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import sharp from 'sharp'
-import { buildPrompt, cellKey } from '../shared/grid.js'
+import { cellKey } from '../shared/grid.js'
+import { ASSET_DIR, generateCell, requireToken } from './generate.js'
+
+requireToken()
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const MANIFEST = join(root, 'data', 'manifest.json')
-// Served by Express, not Vite: Vite's dev server only indexes public/ at
-// startup, so images written mid-session would 404 until a restart.
-const ASSET_DIR = join(root, 'generated')
-const REVE_URL = 'https://api.reve.com/v2/image/create'
 
-const token = process.env.REVE_API_TOKEN
-if (!token) {
-  console.error('Missing REVE_API_TOKEN. Copy .env.example to .env and add your key.')
-  process.exit(1)
-}
-
+// The directory listing is the manifest. Deriving it means the batch script and
+// the server can both write images without racing over a shared JSON file.
 const readManifest = async () => {
-  try {
-    return JSON.parse(await readFile(MANIFEST, 'utf8'))
-  } catch {
-    return {}
-  }
+  const files = await readdir(ASSET_DIR).catch(() => [])
+  return Object.fromEntries(
+    files
+      .filter((f) => f.endsWith('.webp'))
+      .map((f) => [f.replace(/\.webp$/, ''), { image: `/api/assets/${f}`, generated: true }]),
+  )
 }
 
 const inFlight = new Map()
 
 async function generate(subject, style) {
-  const prompt = buildPrompt(subject, style)
-  if (!prompt) throw Object.assign(new Error('Unknown subject or style'), { status: 400 })
-
-  const res = await fetch(REVE_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ prompt, aspect_ratio: '1:1' }),
-  })
-
-  if (!res.ok) {
-    const detail = await res.text()
-    throw Object.assign(new Error(detail.slice(0, 500)), { status: res.status })
-  }
-
-  // Reve returns either JSON with a base64 image field or raw image bytes.
-  const body = await res.json()
-  if (body.content_violation) {
-    throw Object.assign(new Error('Content policy violation'), { status: 422 })
-  }
-  if (!body.image) throw Object.assign(new Error('No image in Reve response'), { status: 502 })
-
-  // Reve returns a 4096px PNG (~2.5MB); the grid only ever shows it small.
-  const webp = await sharp(Buffer.from(body.image, 'base64'))
-    .resize(1024, 1024)
-    .webp({ quality: 82 })
-    .toBuffer()
-
-  const file = `${cellKey(subject, style)}.webp`
-  await mkdir(ASSET_DIR, { recursive: true })
-  await writeFile(join(ASSET_DIR, file), webp)
-
-  const manifest = await readManifest()
-  manifest[cellKey(subject, style)] = { image: `/api/assets/${file}`, generated: true }
-  await mkdir(dirname(MANIFEST), { recursive: true })
-  await writeFile(MANIFEST, JSON.stringify(manifest, null, 2))
-
-  console.log(`generated ${file} — ${body.credits_remaining} credits left`)
-  return `/api/assets/${file}`
+  const { url, creditsRemaining } = await generateCell(subject, style)
+  console.log(`generated ${url} — ${creditsRemaining} credits left`)
+  return url
 }
 
 const app = express()

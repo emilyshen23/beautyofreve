@@ -9,6 +9,7 @@
     "dev:client": "vite",
     "build": "tsc -b && vite build",
     "start": "node --env-file=.env server/index.js",
+    "generate:all": "node --env-file=.env server/batch.js",
     "lint": "oxlint",
     "preview": "vite preview"
   },
