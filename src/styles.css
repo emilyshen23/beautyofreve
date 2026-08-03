@@ -5,22 +5,23 @@
    @font-face rules pointing at them. */
 
 :root {
+  /* Sampled from the Figma frame (1440x1024). */
+  --bg: #141414;
+  --panel: #000;
+  --group: #212020;
+  --chip: #2b2b2b;
+  --dim: #b0afaf;
+  --dim-soft: rgba(176, 175, 175, 0.6);
   --line: rgba(255, 255, 255, 0.12);
-  --gutter: 44px;
-  --tab: 24px;
+  --select: #0d99ff;
+
+  --canvas-w: 954;
+  --canvas-h: 431;
+  --sheet-cols: 18;
+  --panel-h: 345px;
+  --tab-h: 47px;
+
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-
-  /* Hover trail: an image snaps in, holds, then fades slowly once you leave.
-     Sweeping across cells leaves a cascade rather than a single reveal. */
-  --appear: 90ms;
-  --linger: 450ms;
-  --fade: 650ms;
-
-  /* 16 columns x 8 rows, sized to whichever viewport axis binds first. */
-  --cell: min(
-    calc((100vw - var(--gutter) * 2) / 16),
-    calc((100vh - var(--gutter) * 2) / 8)
-  );
 }
 
 * {
@@ -29,135 +30,523 @@
   padding: 0;
 }
 
-html {
-  background: #000;
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
-  display: grid;
-  place-items: center;
-  min-height: 100dvh;
-  overflow: hidden;
+  background: var(--bg);
   color: #fff;
   font-family: 'Forma DJR Deck', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  /* Dragging stickers across the page would otherwise select the chrome. */
+  user-select: none;
 }
 
-.plate {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(16, var(--cell));
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+input {
+  user-select: text;
 }
 
-/* Style labels — white tabs sitting outside the plate so the grid itself
-   stays optically centred. */
+button {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
 
-.tab {
-  position: absolute;
-  right: 100%;
+.app {
   display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Header */
+
+.header {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding-top: 18px;
+  font-size: 16px;
+}
+
+.header .muted {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Stage — download row, canvas, controls */
+
+.stage {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: var(--tab);
-  height: var(--cell);
-  background: #fff;
-  color: #000;
-  font-size: 9.5px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  overflow: hidden;
+  min-height: 0;
 }
 
-.tab span {
-  writing-mode: vertical-rl;
-  rotate: 180deg;
-  white-space: nowrap;
+.stage-inner {
+  display: flex;
+  flex-direction: column;
+  width: min(954px, calc(100vw - 80px));
 }
 
-/* Cells */
+.stage-top {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 28px;
+}
 
-.cell {
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 33px;
+  height: 33px;
+  /* It's an <a>, so without this the icon inherits the default link blue
+     through currentColor. */
+  color: var(--dim);
+  opacity: 0.35;
+  transition: opacity 160ms var(--ease-out);
+}
+
+.icon-btn:not(:disabled):hover {
+  opacity: 1;
+}
+
+.icon-btn:disabled {
+  cursor: not-allowed;
+}
+
+.icon-btn.ready {
+  opacity: 0.85;
+}
+
+/* Canvas */
+
+.canvas {
   position: relative;
-  width: var(--cell);
-  height: var(--cell);
-  border: 0;
-  border-top: 1px solid var(--line);
-  border-left: 1px solid var(--line);
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
+  aspect-ratio: var(--canvas-w) / var(--canvas-h);
+  width: 100%;
+  background: #fff;
   overflow: hidden;
-  appearance: none;
+  touch-action: none;
+  /* Contains the placed stickers' z-indexes. Without a stacking context they
+     escape into the root and cover the style menu below the canvas. */
+  isolation: isolate;
 }
 
-.cell:focus-visible {
-  outline: 1px solid #fff;
+.canvas.drop-target {
+  outline: 1px solid var(--select);
   outline-offset: -1px;
 }
 
-.cell-img {
+.scene-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
-  transition: opacity var(--fade) var(--ease-out) var(--linger);
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .cell:hover .cell-img {
-    opacity: 1;
-    transition: opacity var(--appear) var(--ease-out) 0ms;
-  }
+/* Placed stickers */
+
+.placed {
+  position: absolute;
+  transform-origin: center;
+  will-change: transform;
 }
 
-/* Loading — a slow sweep in the black/gray palette, no spinner */
+.placed img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
 
-.cell-shimmer {
+.placed-hit {
   position: absolute;
   inset: 0;
-  opacity: 0;
-  background: linear-gradient(
-    100deg,
-    transparent 20%,
-    rgba(255, 255, 255, 0.09) 50%,
-    transparent 80%
-  );
-  background-size: 250% 100%;
-  transition: opacity 160ms var(--ease-out);
+  cursor: grab;
+}
+
+.placed.dragging .placed-hit {
+  cursor: grabbing;
+}
+
+.placed-frame {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--select);
   pointer-events: none;
 }
 
-.cell[data-status='loading'] .cell-shimmer {
-  opacity: 1;
-  animation: sweep 1.4s linear infinite;
+.handle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--select);
+  border-radius: 1px;
+  background: #fff;
+  pointer-events: auto;
 }
 
-.cell[data-status='loading'] .cell-img {
-  opacity: 0;
-  transition: opacity 160ms var(--ease-out) 0ms;
+.handle.nw { top: -5px; left: -5px; cursor: nwse-resize; }
+.handle.ne { top: -5px; right: -5px; cursor: nesw-resize; }
+.handle.sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
+.handle.se { bottom: -5px; right: -5px; cursor: nwse-resize; }
+
+.handle.rotate {
+  top: -26px;
+  left: 50%;
+  translate: -50% 0;
+  border-radius: 50%;
+  cursor: grab;
 }
 
-.cell[data-status='error'] {
-  background: rgba(255, 255, 255, 0.04);
+/* Controls — style dropdown + Craft */
+
+.controls {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  align-self: flex-end;
+  width: fit-content;
+  margin-top: 16px;
+  padding: 8px 20px;
+  border-radius: 100px;
+  background: var(--group);
 }
 
-@keyframes sweep {
-  from {
-    background-position: 150% 0;
-  }
-  to {
-    background-position: -150% 0;
-  }
+.select-style {
+  position: relative;
+}
+
+.chip {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 1000px;
+  background: var(--chip);
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+.chip.placeholder {
+  color: #fff;
+}
+
+.chip.chosen {
+  color: var(--dim);
+}
+
+.chip svg {
+  transition: rotate 200ms var(--ease-out);
+}
+
+.chip[aria-expanded='true'] svg {
+  rotate: 180deg;
+}
+
+.style-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  overflow: hidden;
+  min-width: 240px;
+  border-radius: 16px;
+  background: var(--chip);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.style-menu button {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  color: var(--dim);
+  font-size: 16px;
+  text-align: left;
+  transition: background 140ms var(--ease-out), color 140ms var(--ease-out);
+}
+
+.style-menu button:hover,
+.style-menu button[aria-selected='true'] {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+.craft {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 100px;
+  color: var(--dim);
+  font-size: 20px;
+  transition: background 200ms var(--ease-out), color 200ms var(--ease-out);
+}
+
+.craft:disabled {
+  cursor: not-allowed;
+}
+
+.craft.enabled {
+  background: #fff;
+  color: var(--bg);
+  font-weight: 500;
+}
+
+/* Tabs + bottom panel */
+
+.tabs {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.tab {
+  width: 160px;
+  height: var(--tab-h);
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+  color: var(--dim-soft);
+  font-size: 20px;
+  transition: color 160ms var(--ease-out);
+}
+
+.tab.active {
+  background: var(--panel);
+  color: #fff;
+}
+
+.panel {
+  flex-shrink: 0;
+  height: var(--panel-h);
+  background: var(--panel);
+}
+
+/* Sticker sheet grid */
+
+.sheet {
+  display: grid;
+  grid-template-columns: repeat(var(--sheet-cols), 1fr);
+  /* Explicit width: as a flex item, `margin: 0 auto` opts out of cross-axis
+     stretch, which would otherwise collapse the grid to its content width. */
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.sheet-cell {
+  position: relative;
+  aspect-ratio: 1;
+  /* Grid items default to min-width:auto, so the 512px sticker art would set a
+     min-content floor the 1fr tracks can't shrink below and the sheet would
+     overflow its panel. */
+  min-width: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.sheet-cell img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: scale 180ms var(--ease-out);
+}
+
+.sheet-cell img:hover {
+  scale: 1.12;
+}
+
+/* Name label — white pill with a caret, anchored above the cell */
+
+.name-label {
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  translate: -50% 0;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: #fff;
+  color: #000;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.name-label::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  translate: -50% 0;
+  border: 6px solid transparent;
+  border-top-color: #fff;
+  border-bottom: 0;
+}
+
+/* Own stickers */
+
+.own {
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+
+.own-empty {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  width: 348px;
+  padding: 11px 15px;
+  border-radius: 16px;
+  background: var(--chip);
+}
+
+.own-empty input {
+  flex: 1;
+  border: 0;
+  background: none;
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+}
+
+.own-empty input::placeholder {
+  color: var(--dim);
+}
+
+.submit {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 33px;
+  height: 33px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--bg);
+  transition: background 200ms var(--ease-out);
+}
+
+.submit.ready {
+  background: #fff;
+}
+
+.submit:disabled {
+  cursor: not-allowed;
+}
+
+/* Once the user has custom stickers, the sheet sits above a compact input. */
+
+.own-filled {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* The sheet keeps its natural row height — stretching it would fight the
+   cells' aspect-ratio and collapse them. The input is pushed to the bottom. */
+.own-filled .sheet {
+  flex: 0 0 auto;
+}
+
+.own-bar {
+  display: grid;
+  place-items: center;
+  margin-top: auto;
+  padding: 12px 0 16px;
+}
+
+/* Drag ghost */
+
+.ghost {
+  position: fixed;
+  z-index: 50;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  opacity: 0.9;
+  pointer-events: none;
+  translate: -50% -50%;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
+}
+
+/* Grainy loading gradient — shared by the sticker tile and the full canvas,
+   so the UI teaches the "something is being painted" language once. */
+
+.grain {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 80% at 20% 30%, #4a6ea8 0%, rgba(74, 110, 168, 0) 70%),
+    radial-gradient(55% 75% at 80% 25%, #c8a570 0%, rgba(200, 165, 112, 0) 72%),
+    radial-gradient(65% 85% at 65% 80%, #8a63b0 0%, rgba(138, 99, 176, 0) 70%),
+    radial-gradient(70% 90% at 25% 85%, #3f8c8c 0%, rgba(63, 140, 140, 0) 75%),
+    #5d6480;
+  background-size: 200% 200%;
+  animation: drift 9s ease-in-out infinite alternate;
+}
+
+.grain::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.28;
+  mix-blend-mode: overlay;
+  animation: grain-shift 1.2s steps(4) infinite;
+  pointer-events: none;
+}
+
+@keyframes drift {
+  from { background-position: 0% 50%, 100% 0%, 50% 100%, 0% 0%; }
+  to   { background-position: 100% 50%, 0% 100%, 20% 0%, 100% 100%; }
+}
+
+@keyframes grain-shift {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-4%, 3%); }
+  50%  { transform: translate(3%, -4%); }
+  75%  { transform: translate(-3%, -3%); }
+  100% { transform: translate(0, 0); }
+}
+
+.grain.tile {
+  border-radius: 4px;
+}
+
+.grain.full {
+  position: absolute;
+  inset: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cell-shimmer {
+  .grain,
+  .grain::after {
     animation: none;
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.06);
   }
 }
