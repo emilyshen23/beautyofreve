@@ -5,14 +5,24 @@ import PlacedSticker from './components/PlacedSticker'
 import { CaretDown, ArrowUp, Download } from './components/icons'
 import { flattenCanvas, CANVAS_W, CANVAS_H } from './lib/flatten'
 import { SCENE_STYLES } from '../shared/scene.js'
+import { STICKERS } from '../shared/stickers.js'
 import type { Placed, Sticker, SceneState } from './lib/types'
 
 const DEFAULT_SIZE = 120
 const uid = () => Math.random().toString(36).slice(2, 9)
 
+/* The 68 built-ins are committed static assets, so the sheet is available
+   without a backend — that's what makes the static deploy worth anything.
+   Only custom stickers and Craft need the server. */
+const BUILT_IN: Sticker[] = STICKERS.map((s: Omit<Sticker, 'src'>) => ({
+  ...s,
+  src: `${import.meta.env.BASE_URL}stickers/${s.id}.webp`,
+}))
+
 export default function App() {
-  const [stickers, setStickers] = useState<Sticker[]>([])
+  const [stickers] = useState<Sticker[]>(BUILT_IN)
   const [custom, setCustom] = useState<Sticker[]>([])
+  const [apiOnline, setApiOnline] = useState(false)
   const [tab, setTab] = useState<'sheet' | 'own'>('sheet')
 
   const [placed, setPlaced] = useState<Placed[]>([])
@@ -33,12 +43,12 @@ export default function App() {
 
   useEffect(() => {
     fetch('/api/stickers')
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no backend'))))
       .then((d) => {
-        setStickers(d.stickers ?? [])
         setCustom(d.custom ?? [])
+        setApiOnline(true)
       })
-      .catch(() => {})
+      .catch(() => setApiOnline(false))
   }, [])
 
   /* Drag from the sheet onto the canvas. Pointer events (rather than HTML5
@@ -166,7 +176,7 @@ export default function App() {
   }
 
   const chosen = SCENE_STYLES.find((s) => s.id === styleId)
-  const canCraft = Boolean(styleId) && placed.length > 0 && scene.status !== 'loading'
+  const canCraft = apiOnline && Boolean(styleId) && placed.length > 0 && scene.status !== 'loading'
   const done = scene.status === 'done'
 
   return (
@@ -233,6 +243,8 @@ export default function App() {
                 transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
               />
             )}
+
+            {scene.status === 'error' && <p className="canvas-note">{scene.message}</p>}
           </div>
 
           <div className="controls">
@@ -272,7 +284,12 @@ export default function App() {
               </AnimatePresence>
             </div>
 
-            <button className={`craft${canCraft ? ' enabled' : ''}`} disabled={!canCraft} onClick={craft}>
+            <button
+              className={`craft${canCraft ? ' enabled' : ''}`}
+              disabled={!canCraft}
+              onClick={craft}
+              title={apiOnline ? undefined : 'Crafting needs the local server — see the README'}
+            >
               Craft
               <ArrowUp />
             </button>
@@ -292,6 +309,12 @@ export default function App() {
       <div className="panel">
         {tab === 'sheet' ? (
           <StickerSheet stickers={stickers} onDragStart={startDrag} />
+        ) : !apiOnline ? (
+          <div className="own">
+            <p className="own-note">
+              Minting stickers needs the local server. Run <code>npm run dev</code> to create your own.
+            </p>
+          </div>
         ) : custom.length || minting ? (
           <div className="own-filled">
             <StickerSheet
