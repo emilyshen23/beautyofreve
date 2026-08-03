@@ -19,6 +19,28 @@ requireToken()
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
+/* Every generation spends 150 credits, and a public URL means anyone can
+   press Craft. This caps what a single caller can burn. Set
+   RATE_LIMIT_PER_HOUR=0 to disable it for local use. */
+const RATE_LIMIT = Number(process.env.RATE_LIMIT_PER_HOUR ?? 12)
+const WINDOW_MS = 60 * 60 * 1000
+const hits = new Map()
+
+function overLimit(req) {
+  if (!RATE_LIMIT) return false
+  const ip = String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() || req.ip
+  const now = Date.now()
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS)
+
+  if (recent.length >= RATE_LIMIT) {
+    hits.set(ip, recent)
+    return true
+  }
+  recent.push(now)
+  hits.set(ip, recent)
+  return false
+}
+
 const app = express()
 // The flattened canvas reference arrives as base64 and runs a few MB.
 app.use(express.json({ limit: '25mb' }))
@@ -52,6 +74,8 @@ app.get('/api/stickers', async (_req, res) => {
 })
 
 app.post('/api/stickers/custom', async (req, res) => {
+  if (overLimit(req)) return res.status(429).json({ error: 'Hourly limit reached — try again later' })
+
   const name = String(req.body?.name ?? '').trim()
   if (!name) return res.status(400).json({ error: 'Name required' })
 
@@ -68,8 +92,11 @@ app.post('/api/stickers/custom', async (req, res) => {
 })
 
 app.post('/api/craft', async (req, res) => {
-  const { styleId, reference, names, continuing } = req.body ?? {}
-  const prompt = buildScenePrompt(styleId, names ?? [], { continuing: Boolean(continuing) })
+  // Checked first, so probing with malformed bodies can't sidestep the cap.
+  if (overLimit(req)) return res.status(429).json({ error: 'Hourly limit reached — try again later' })
+
+  const { styleId, reference, names, mode } = req.body ?? {}
+  const prompt = buildScenePrompt(styleId, names ?? [], { mode })
 
   if (!prompt) return res.status(400).json({ error: 'Unknown style' })
   if (!reference) return res.status(400).json({ error: 'Missing canvas reference' })
@@ -99,5 +126,6 @@ if (existsSync(join(root, 'dist'))) {
   app.use(express.static(join(root, 'dist')))
 }
 
-const port = process.env.REVE_SERVER_PORT ?? 8787
-app.listen(port, () => console.log(`reve backend on http://localhost:${port}`))
+// Hosts (Render, Railway, Fly) inject PORT; 8787 is the local dev default.
+const port = process.env.PORT ?? process.env.REVE_SERVER_PORT ?? 8787
+app.listen(port, () => console.log(`reve backend listening on ${port}`))

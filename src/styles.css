@@ -5,6 +5,8 @@
    @font-face rules pointing at them. */
 
 :root {
+  --zoom: 0.75;
+
   /* Sampled from the Figma frame (1440x1024). */
   --bg: #141414;
   --panel: #000;
@@ -34,7 +36,7 @@
    signed off at — it reads as "zoomed out" without shrinking type relative
    to everything else. */
 html {
-  zoom: 0.75;
+  zoom: var(--zoom);
 }
 
 html,
@@ -203,8 +205,9 @@ button {
 
 .lock {
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: calc(100% + 8px);
+  left: 50%;
+  translate: -50% 0;
   display: grid;
   place-items: center;
   width: 22px;
@@ -258,15 +261,29 @@ button {
 
 /* Controls — style dropdown + Craft */
 
-.controls {
+.controls-row {
   position: relative;
   z-index: 10;
   display: flex;
-  gap: 8px;
+  gap: 14px;
   align-items: center;
   align-self: flex-end;
-  width: fit-content;
   margin-top: 16px;
+}
+
+/* Craft can be disabled for several reasons; a title tooltip alone is too
+   easy to miss, so the reason is stated next to it. */
+.craft-hint {
+  color: var(--dim-soft);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: fit-content;
   padding: 8px 20px;
   border-radius: 100px;
   background: var(--group);
@@ -560,10 +577,15 @@ button {
 /* Drag ghost */
 
 .ghost {
+  /* Pointer coordinates are unzoomed, but this subtree inherits the root
+     zoom — so the ghost counter-scales and sits exactly under the cursor.
+     Sized to match what actually lands (DEFAULT_SIZE in design space). */
+  zoom: calc(1 / var(--zoom));
+
   position: fixed;
   z-index: 50;
-  width: 80px;
-  height: 80px;
+  width: calc(120px * var(--zoom));
+  height: calc(120px * var(--zoom));
   object-fit: contain;
   opacity: 0.9;
   pointer-events: none;

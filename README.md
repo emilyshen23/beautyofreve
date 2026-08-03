@@ -4,7 +4,12 @@ A drag-and-drop sticker collage tool. Pick from 72 pre-generated nature
 stickers (or mint your own), arrange them freely on a canvas, then Reve
 reinterprets the whole arrangement as one cohesive scene in the style you pick.
 
-Live (front end only): https://emilyshen23.github.io/beautyofreve/
+Two deploys:
+
+- **GitHub Pages** — https://emilyshen23.github.io/beautyofreve/ — static only.
+  The sheet and canvas work; Craft and custom stickers don't, because there's
+  no server there.
+- **Render** — the full app, including Craft. See [Deploying](#deploying).
 
 The metaphor is a craft table: stickers you cut, arrange, and hand off to be
 repainted as a single image. The generate step isn't editing a photo — it's
@@ -99,6 +104,38 @@ Two things worth knowing before changing this:
 - **The page renders at `zoom: 0.75`.** All pointer maths converts through
   `getBoundingClientRect()` against layout width, so it stays correct under
   zoom — don't swap in hard-coded pixel assumptions.
+
+## Deploying
+
+### Render (full app)
+
+`render.yaml` is a blueprint, so Render configures everything from the repo:
+
+1. Sign in to [render.com](https://render.com) with GitHub.
+2. **New → Blueprint**, pick the `beautyofreve` repo.
+3. Render reads `render.yaml` and prompts for `REVE_API_TOKEN` — paste the key
+   there. It is stored as a secret and never committed (`sync: false`).
+4. Deploy.
+
+The key stays server-side; the browser only ever calls `/api/*`.
+
+Two things about the free plan: the service sleeps after ~15 minutes idle, so
+the first request afterwards takes roughly a minute; and the filesystem resets
+on restart, so custom stickers and crafted scenes are not durable. Attach a
+Render Disk (or swap `generated/` for object storage) if they need to persist.
+
+### Protecting credits
+
+A public URL means anyone can press Craft, and every generation spends 150
+credits. `RATE_LIMIT_PER_HOUR` (default 12) caps generations per IP per hour,
+counted before request validation so malformed probes can't sidestep it. Set
+it to `0` to disable locally.
+
+### GitHub Pages (front end only)
+
+`.github/workflows/pages.yml` builds with `GITHUB_PAGES=1` (which sets the
+`/beautyofreve/` base path) and publishes `dist` on every push to `main`. The
+backend is never part of that build.
 
 ## Fonts
 

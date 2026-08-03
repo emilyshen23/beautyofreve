@@ -8,7 +8,7 @@
     "dev:server": "node --env-file=.env server/index.js",
     "dev:client": "vite",
     "build": "tsc -b && vite build",
-    "start": "node --env-file=.env server/index.js",
+    "start": "node --env-file-if-exists=.env server/index.js",
     "generate:all": "node --env-file=.env server/batch.js",
     "stickers": "node --env-file=.env server/batch-stickers.js",
     "lint": "oxlint",
@@ -30,5 +30,8 @@
     "oxlint": "^1.71.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

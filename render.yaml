@@ -1,0 +1,22 @@
+# Render blueprint. Deploys the full app — static front end plus the Express
+# API — so Craft, custom stickers and iterative regeneration all work.
+#
+# REVE_API_TOKEN is deliberately NOT in this file. `sync: false` makes Render
+# prompt for it and store it as a secret; it must never be committed.
+
+services:
+  - type: web
+    name: beautyofreve
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/stickers
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: REVE_API_TOKEN
+        sync: false
+      # Each generation costs 150 credits, so cap what one visitor can spend.
+      - key: RATE_LIMIT_PER_HOUR
+        value: '12'

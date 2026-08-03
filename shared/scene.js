@@ -32,14 +32,29 @@ export const SCENE_STYLES = [
  * describe intent — never coordinates. Spatial language is unreliable; the
  * reference image carries the layout.
  */
-export function buildScenePrompt(styleId, stickerNames, { continuing = false } = {}) {
+/**
+ * Three modes, because the reference image means something different each time:
+ *   compose — a flat sticker collage, to be painted into one scene
+ *   add     — a finished scene with new cut-outs laid on top
+ *   restyle — a finished scene to be repainted in a different style
+ */
+export function buildScenePrompt(styleId, stickerNames, { mode = 'compose' } = {}) {
   const style = SCENE_STYLES.find((s) => s.id === styleId)
   if (!style) return null
+
+  if (mode === 'restyle') {
+    return (
+      `<frame1> shows a finished scene. Repaint it completely in ${style.name}, ` +
+      `keeping the same composition: the same subjects, in the same positions, ` +
+      `at the same relative scale. Change only the rendering treatment. ` +
+      `${style.block} No text, no watermark.`
+    )
+  }
 
   /* Continuing rounds hand Reve an already-painted scene with fresh stickers
      laid on top, so the instruction is to absorb the new elements rather than
      to repaint everything from a flat sticker collage. */
-  if (continuing) {
+  if (mode === 'add') {
     return (
       `<frame1> shows an already-painted ${style.name} scene with new flat ` +
       `sticker cut-outs placed on top of it: ${stickerNames.join(', ')}. Keep ` +

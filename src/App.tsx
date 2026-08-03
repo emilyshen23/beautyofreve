@@ -162,7 +162,7 @@ export default function App() {
   }
 
   async function craft() {
-    if (!styleId || !placed.length || scene.status === 'loading') return
+    if (!canCraft) return
     setScene({ status: 'loading' })
     setSelected(null)
     try {
@@ -174,7 +174,7 @@ export default function App() {
           styleId,
           reference,
           names: [...new Set(placed.map((p) => p.name))],
-          continuing: Boolean(background),
+          mode: craftMode,
         }),
       })
       const data = await res.json()
@@ -219,7 +219,23 @@ export default function App() {
   }
 
   const chosen = SCENE_STYLES.find((s) => s.id === styleId)
-  const canCraft = apiOnline && Boolean(styleId) && placed.length > 0 && scene.status !== 'loading'
+
+  /* With a scene already on the canvas and no new stickers, Craft restyles it
+     — otherwise picking a different style after a craft would do nothing. */
+  const craftMode = background ? (placed.length ? 'add' : 'restyle') : 'compose'
+  const hasSubject = placed.length > 0 || Boolean(background)
+  const canCraft =
+    apiOnline && Boolean(styleId) && hasSubject && scene.status !== 'loading'
+
+  const craftHint = canCraft
+    ? null
+    : !apiOnline
+      ? 'Crafting needs the local server'
+      : !hasSubject
+        ? 'Drag a sticker onto the canvas'
+        : !styleId
+          ? 'Pick a style first'
+          : null
 
   return (
     <div className="app">
@@ -289,7 +305,9 @@ export default function App() {
             {scene.status === 'error' && <p className="canvas-note">{scene.message}</p>}
           </div>
 
-          <div className="controls">
+          <div className="controls-row">
+            {craftHint && <span className="craft-hint">{craftHint}</span>}
+            <div className="controls">
             <div className="select-style">
               <button
                 className={`chip ${chosen ? 'chosen' : 'placeholder'}`}
@@ -330,11 +348,12 @@ export default function App() {
               className={`craft${canCraft ? ' enabled' : ''}`}
               disabled={!canCraft}
               onClick={craft}
-              title={apiOnline ? undefined : 'Crafting needs the local server — see the README'}
+              title={craftHint ?? undefined}
             >
               Craft
               <ArrowUp />
             </button>
+            </div>
           </div>
         </div>
       </div>
