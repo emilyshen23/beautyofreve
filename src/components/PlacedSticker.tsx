@@ -23,6 +23,7 @@ export default function PlacedSticker({ item, selected, onSelect, onChange, canv
   function begin(e: React.PointerEvent, mode: 'move' | Corner | 'rotate') {
     e.stopPropagation()
     onSelect()
+    if (item.locked) return
     const el = e.currentTarget as HTMLElement
     el.setPointerCapture(e.pointerId)
     setDragging(true)
@@ -104,14 +105,61 @@ export default function PlacedSticker({ item, selected, onSelect, onChange, canv
       <img src={item.src} alt={item.name} draggable={false} />
       <div className="placed-hit" onPointerDown={(e) => begin(e, 'move')} />
 
+      {/* Revealed on hover (and while selected) so a sticker can be pinned
+          without first selecting it. */}
+      <button
+        className={`lock${item.locked ? ' on' : ''}`}
+        title={item.locked ? 'Unlock position' : 'Lock position'}
+        aria-pressed={item.locked ?? false}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation()
+          onChange({ locked: !item.locked })
+        }}
+      >
+        {item.locked ? <LockClosed /> : <LockOpen />}
+      </button>
+
       {selected && (
-        <div className="placed-frame">
-          {(['nw', 'ne', 'sw', 'se'] as Corner[]).map((c) => (
-            <div key={c} className={`handle ${c}`} onPointerDown={(e) => begin(e, c)} />
-          ))}
-          <div className="handle rotate" onPointerDown={(e) => begin(e, 'rotate')} />
+        <div className={`placed-frame${item.locked ? ' locked' : ''}`}>
+          {!item.locked && (
+            <>
+              {(['nw', 'ne', 'sw', 'se'] as Corner[]).map((c) => (
+                <div key={c} className={`handle ${c}`} onPointerDown={(e) => begin(e, c)} />
+              ))}
+              <div className="handle rotate" onPointerDown={(e) => begin(e, 'rotate')} />
+            </>
+          )}
         </div>
       )}
     </motion.div>
+  )
+}
+
+function LockOpen() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M17 10h1a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h8V7a3 3 0 0 1 6 0"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function LockClosed() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M6 10h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Zm3 0V7a3 3 0 0 1 6 0v3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }

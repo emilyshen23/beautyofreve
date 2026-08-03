@@ -1,8 +1,10 @@
 # beautyofreve — Nature Sticker Craft
 
-A drag-and-drop sticker collage tool. Pick from 68 pre-generated nature
+A drag-and-drop sticker collage tool. Pick from 72 pre-generated nature
 stickers (or mint your own), arrange them freely on a canvas, then Reve
 reinterprets the whole arrangement as one cohesive scene in the style you pick.
+
+Live (front end only): https://emilyshen23.github.io/beautyofreve/
 
 The metaphor is a craft table: stickers you cut, arrange, and hand off to be
 repainted as a single image. The generate step isn't editing a photo — it's
@@ -28,6 +30,8 @@ Each placed sticker is an independent object:
 - **Rotate** from the handle above the box (hold <kbd>Shift</kbd> to snap to 15°)
 - **Duplicate** with <kbd>Cmd</kbd>+<kbd>C</kbd> / <kbd>V</kbd>, offset 24px
 - **Delete** with <kbd>Backspace</kbd>, deselect with <kbd>Esc</kbd>
+- **Lock** from the badge that appears on hover — a locked sticker keeps its
+  position and offers no handles until unlocked
 
 Positions are stored in canvas design space (954 × 431), not screen pixels, so
 an arrangement survives a window resize.
@@ -45,16 +49,25 @@ and the reference is rendered at 2:1 so the composition isn't squashed to fit.
 
 A craft call takes roughly **60 seconds**.
 
+**Crafting is iterative.** The result becomes the canvas backdrop and the
+stickers clear, because they've been absorbed into the painting. Drop more
+stickers on top and craft again: the flattened reference then carries the
+finished scene *plus* the new cut-outs, and the prompt switches to asking Reve
+to keep the existing painting and blend only the new elements into it.
+
+The download button re-encodes the scene to PNG in the browser (scenes are
+stored as WebP).
+
 ## Generating the stickers
 
-The 68 built-ins are generated once and committed to `public/stickers/`:
+The 72 built-ins are generated once and committed to `public/stickers/`:
 
 ```bash
 npm run stickers
 ```
 
 Skips anything already on disk, so it's safe to re-run after a failure. Each
-generation costs 150 credits (~10,200 for a full run). Custom stickers from the
+generation costs 150 credits (~10,800 for a full run). Custom stickers from the
 **Own stickers** tab are live calls, one per submission, cached in
 `generated/custom/`.
 
@@ -83,6 +96,9 @@ Two things worth knowing before changing this:
 - **The canvas sets `isolation: isolate`.** Placed stickers carry a `z-index`;
   without a stacking context they escape into the root and cover the style
   menu below the canvas.
+- **The page renders at `zoom: 0.75`.** All pointer maths converts through
+  `getBoundingClientRect()` against layout width, so it stays correct under
+  zoom — don't swap in hard-coded pixel assumptions.
 
 ## Fonts
 

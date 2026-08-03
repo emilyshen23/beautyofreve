@@ -32,9 +32,25 @@ export const SCENE_STYLES = [
  * describe intent — never coordinates. Spatial language is unreliable; the
  * reference image carries the layout.
  */
-export function buildScenePrompt(styleId, stickerNames) {
+export function buildScenePrompt(styleId, stickerNames, { continuing = false } = {}) {
   const style = SCENE_STYLES.find((s) => s.id === styleId)
   if (!style) return null
+
+  /* Continuing rounds hand Reve an already-painted scene with fresh stickers
+     laid on top, so the instruction is to absorb the new elements rather than
+     to repaint everything from a flat sticker collage. */
+  if (continuing) {
+    return (
+      `<frame1> shows an already-painted ${style.name} scene with new flat ` +
+      `sticker cut-outs placed on top of it: ${stickerNames.join(', ')}. Keep ` +
+      `the existing painted scene essentially as it is, and repaint only the ` +
+      `newly added elements so they belong naturally inside it — matching its ` +
+      `lighting, perspective, scale, and texture, and casting appropriate ` +
+      `shadows. Keep each new element at the position and size shown. Nothing ` +
+      `in the final image should look like a flat sticker pasted on top. ` +
+      `${style.block} No text, no watermark.`
+    )
+  }
 
   return (
     `Using the composition shown in <frame1> as the layout guide, create one ` +

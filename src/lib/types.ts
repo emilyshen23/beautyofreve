@@ -18,10 +18,13 @@ export type Placed = {
   w: number
   h: number
   rot: number
+  /** Pinned in place — drag, resize and rotate are all refused. */
+  locked?: boolean
 }
 
+/* The finished image lives in its own `background` state rather than here,
+   since it persists as the canvas backdrop across further rounds. */
 export type SceneState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'done'; url: string }
   | { status: 'error'; message: string }

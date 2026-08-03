@@ -30,6 +30,13 @@
   padding: 0;
 }
 
+/* The whole composition sits at 75%, which is the density the design was
+   signed off at — it reads as "zoomed out" without shrinking type relative
+   to everything else. */
+html {
+  zoom: 0.75;
+}
+
 html,
 body,
 #root {
@@ -188,6 +195,44 @@ button {
   pointer-events: none;
 }
 
+/* A locked sticker still shows it's selected, but offers no handles. */
+.placed-frame.locked {
+  border-style: dashed;
+  border-color: rgba(13, 153, 255, 0.55);
+}
+
+.lock {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(20, 20, 20, 0.85);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 140ms var(--ease-out), background 140ms var(--ease-out);
+}
+
+.placed:hover .lock,
+.lock.on {
+  opacity: 1;
+}
+
+.lock.on {
+  background: var(--select);
+}
+
+.lock:hover {
+  background: rgba(20, 20, 20, 1);
+}
+
+.lock.on:hover {
+  background: #0b87e3;
+}
+
 .handle {
   position: absolute;
   width: 9px;
@@ -309,9 +354,14 @@ button {
 
 /* Tabs + bottom panel */
 
+/* Shares the sheet's track so the tabs start exactly where the stickers do,
+   rather than sitting flush against the viewport edge. */
 .tabs {
   display: flex;
   flex-shrink: 0;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
 .tab {
@@ -525,16 +575,42 @@ button {
    so the UI teaches the "something is being painted" language once. */
 
 .grain {
+  --grain-blur: 30px;
+
   position: relative;
   overflow: hidden;
+  background: #8b8259;
+}
+
+/* Muted heat-map blobs — sage, steel blue, ochre and dusty plum. They visibly
+   churn because drifting the background alone read as almost static, so the
+   layer also scales and rotates. */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: -55%;
   background:
-    radial-gradient(60% 80% at 20% 30%, #4a6ea8 0%, rgba(74, 110, 168, 0) 70%),
-    radial-gradient(55% 75% at 80% 25%, #c8a570 0%, rgba(200, 165, 112, 0) 72%),
-    radial-gradient(65% 85% at 65% 80%, #8a63b0 0%, rgba(138, 99, 176, 0) 70%),
-    radial-gradient(70% 90% at 25% 85%, #3f8c8c 0%, rgba(63, 140, 140, 0) 75%),
-    #5d6480;
-  background-size: 200% 200%;
-  animation: drift 9s ease-in-out infinite alternate;
+    radial-gradient(closest-side, #5f8fa6 0%, rgba(95, 143, 166, 0) 100%),
+    radial-gradient(closest-side, #9ca66f 0%, rgba(156, 166, 111, 0) 100%),
+    radial-gradient(closest-side, #b8925c 0%, rgba(184, 146, 92, 0) 100%),
+    radial-gradient(closest-side, #6f4f6d 0%, rgba(111, 79, 109, 0) 100%);
+  background-repeat: no-repeat;
+  /* Kept tighter than the layer so the four fields stay legible instead of
+     averaging into one flat tone. */
+  background-size: 60% 60%, 56% 56%, 62% 62%, 48% 48%;
+  filter: blur(var(--grain-blur));
+  animation: churn 3.6s ease-in-out infinite alternate;
+}
+
+@keyframes churn {
+  from {
+    background-position: 2% 12%, 88% 4%, 68% 88%, 8% 92%;
+    transform: scale(1) rotate(0deg);
+  }
+  to {
+    background-position: 66% 74%, 14% 66%, 10% 16%, 84% 20%;
+    transform: scale(1.18) rotate(9deg);
+  }
 }
 
 .grain::after {
@@ -548,11 +624,6 @@ button {
   pointer-events: none;
 }
 
-@keyframes drift {
-  from { background-position: 0% 50%, 100% 0%, 50% 100%, 0% 0%; }
-  to   { background-position: 100% 50%, 0% 100%, 20% 0%, 100% 100%; }
-}
-
 @keyframes grain-shift {
   0%   { transform: translate(0, 0); }
   25%  { transform: translate(-4%, 3%); }
@@ -561,17 +632,22 @@ button {
   100% { transform: translate(0, 0); }
 }
 
+/* The blur has to track the surface size or the tile turns to mush. */
 .grain.tile {
+  --grain-blur: 9px;
+
   border-radius: 4px;
 }
 
 .grain.full {
+  --grain-blur: 40px;
+
   position: absolute;
   inset: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .grain,
+  .grain::before,
   .grain::after {
     animation: none;
   }

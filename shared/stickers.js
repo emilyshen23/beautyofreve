@@ -68,6 +68,13 @@ export const STICKER_CATEGORIES = [
       'Seashell', 'River stone', 'Honeycomb', 'Beehive', "Bird's nest with eggs",
     ],
   },
+  {
+    // Appended last so they fill the four empty cells in the bottom-right
+    // without shifting any existing sticker's position in the sheet.
+    id: 'extra',
+    label: 'More nature',
+    names: ['Frog', 'Wolf', 'Dandelion', 'Lily pad'],
+  },
 ]
 
 export const slugify = (name) =>

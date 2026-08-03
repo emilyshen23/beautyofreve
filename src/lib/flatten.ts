@@ -24,7 +24,10 @@ const loadImage = (src: string) =>
  * white canvas. This flattened image is what gets sent to Reve as the layout
  * guide — far more reliable than describing coordinates in words.
  */
-export async function flattenCanvas(placed: Placed[]): Promise<string> {
+export async function flattenCanvas(
+  placed: Placed[],
+  background?: string | null,
+): Promise<string> {
   const canvas = document.createElement('canvas')
   canvas.width = OUT_W
   canvas.height = OUT_H
@@ -36,6 +39,13 @@ export async function flattenCanvas(placed: Placed[]): Promise<string> {
 
   const scale = OUT_W / CANVAS_W
   const yOffset = (OUT_H - CANVAS_H * scale) / 2
+
+  /* A previously crafted scene sits underneath, so a second Craft continues
+     from the finished image. Drawn full-bleed: the letterboxing above lines
+     the sticker layer up with the `object-fit: cover` crop on screen. */
+  if (background) {
+    ctx.drawImage(await loadImage(background), 0, 0, OUT_W, OUT_H)
+  }
 
   const images = await Promise.all(placed.map((p) => loadImage(p.src)))
 

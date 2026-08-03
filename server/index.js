@@ -68,8 +68,8 @@ app.post('/api/stickers/custom', async (req, res) => {
 })
 
 app.post('/api/craft', async (req, res) => {
-  const { styleId, reference, names } = req.body ?? {}
-  const prompt = buildScenePrompt(styleId, names ?? [])
+  const { styleId, reference, names, continuing } = req.body ?? {}
+  const prompt = buildScenePrompt(styleId, names ?? [], { continuing: Boolean(continuing) })
 
   if (!prompt) return res.status(400).json({ error: 'Unknown style' })
   if (!reference) return res.status(400).json({ error: 'Missing canvas reference' })

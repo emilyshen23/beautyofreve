@@ -31,6 +31,8 @@ export default function App() {
   const [styleId, setStyleId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [scene, setScene] = useState<SceneState>({ status: 'idle' })
+  /** The last crafted image, kept as the canvas backdrop so work can continue. */
+  const [background, setBackground] = useState<string | null>(null)
 
   const [prompt, setPrompt] = useState('')
   const [minting, setMinting] = useState(false)
@@ -111,7 +113,14 @@ export default function App() {
         clipboard.current = item
       } else if (meta && e.key === 'v' && clipboard.current) {
         e.preventDefault()
-        const copy = { ...clipboard.current, uid: uid(), x: clipboard.current.x + 24, y: clipboard.current.y + 24 }
+        // The duplicate starts unlocked, or it would land immovable.
+        const copy = {
+          ...clipboard.current,
+          uid: uid(),
+          x: clipboard.current.x + 24,
+          y: clipboard.current.y + 24,
+          locked: false,
+        }
         setPlaced((p) => [...p, copy])
         setSelected(copy.uid)
       } else if ((e.key === 'Backspace' || e.key === 'Delete') && item) {
@@ -157,7 +166,7 @@ export default function App() {
     setScene({ status: 'loading' })
     setSelected(null)
     try {
-      const reference = await flattenCanvas(placed)
+      const reference = await flattenCanvas(placed, background)
       const res = await fetch('/api/craft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -165,19 +174,52 @@ export default function App() {
           styleId,
           reference,
           names: [...new Set(placed.map((p) => p.name))],
+          continuing: Boolean(background),
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      setScene({ status: 'done', url: data.image })
+
+      /* The result becomes the new backdrop and the stickers are cleared —
+         they've been absorbed into the painting. Dropping more on top and
+         crafting again continues from here. */
+      setBackground(data.image)
+      setPlaced([])
+      setScene({ status: 'idle' })
     } catch (err) {
       setScene({ status: 'error', message: (err as Error).message })
     }
   }
 
+  async function downloadPng() {
+    if (!background) return
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.src = background
+    await new Promise((res, rej) => {
+      img.onload = res
+      img.onerror = rej
+    })
+
+    // Scenes are stored as WebP; re-encode so the download is a real PNG.
+    const c = document.createElement('canvas')
+    c.width = img.naturalWidth
+    c.height = img.naturalHeight
+    c.getContext('2d')?.drawImage(img, 0, 0)
+
+    const blob = await new Promise<Blob | null>((res) => c.toBlob(res, 'image/png'))
+    if (!blob) return
+
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'nature-craft.png'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const chosen = SCENE_STYLES.find((s) => s.id === styleId)
   const canCraft = apiOnline && Boolean(styleId) && placed.length > 0 && scene.status !== 'loading'
-  const done = scene.status === 'done'
 
   return (
     <div className="app">
@@ -189,16 +231,15 @@ export default function App() {
       <div className="stage">
         <div className="stage-inner">
           <div className="stage-top">
-            <a
-              className={`icon-btn${done ? ' ready' : ''}`}
-              href={done ? scene.url : undefined}
-              download={done ? 'nature-craft.webp' : undefined}
-              aria-disabled={!done}
-              aria-label="Download scene"
-              onClick={(e) => !done && e.preventDefault()}
+            <button
+              className={`icon-btn${background ? ' ready' : ''}`}
+              disabled={!background}
+              aria-label="Download scene as PNG"
+              title={background ? 'Download as PNG' : undefined}
+              onClick={downloadPng}
             >
               <Download />
-            </a>
+            </button>
           </div>
 
           <div
@@ -207,9 +248,21 @@ export default function App() {
             onPointerDown={() => setSelected(null)}
             style={{ ['--canvas-w' as string]: CANVAS_W, ['--canvas-h' as string]: CANVAS_H }}
           >
-            {/* Placed stickers stay mounted under the result so "edit and
-                regenerate" needs no extra bookkeeping. */}
-            {!done && scene.status !== 'loading' &&
+            {background && (
+              <motion.img
+                key={background}
+                className="scene-img"
+                src={background}
+                alt="Crafted scene"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+              />
+            )}
+
+            {/* Stickers sit on top of any crafted backdrop, so more can be
+                added and the whole thing crafted again. */}
+            {scene.status !== 'loading' &&
               placed.map((item) => (
                 <PlacedSticker
                   key={item.uid}
@@ -232,17 +285,6 @@ export default function App() {
                 />
               )}
             </AnimatePresence>
-
-            {done && (
-              <motion.img
-                className="scene-img"
-                src={scene.url}
-                alt="Crafted scene"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-              />
-            )}
 
             {scene.status === 'error' && <p className="canvas-note">{scene.message}</p>}
           </div>
