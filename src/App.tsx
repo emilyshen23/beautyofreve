@@ -118,8 +118,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [placed, selected])
 
-  async function mint(e: React.FormEvent) {
-    e.preventDefault()
+  async function mint() {
     const name = prompt.trim()
     if (!name || minting) return
 
@@ -320,17 +319,30 @@ export default function App() {
 type MintProps = {
   value: string
   onChange: (v: string) => void
-  onSubmit: (e: React.FormEvent) => void
+  onSubmit: () => void
   busy: boolean
 }
 
 function MintInput({ value, onChange, onSubmit, busy }: MintProps) {
   const ready = value.trim().length > 0 && !busy
   return (
-    <form className="own-empty" onSubmit={onSubmit}>
+    <form
+      className="own-empty"
+      onSubmit={(e) => {
+        e.preventDefault()
+        onSubmit()
+      }}
+    >
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        // Belt-and-braces alongside the form's implicit submission.
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            if (ready) onSubmit()
+          }
+        }}
         placeholder="Create your own sticker"
         disabled={busy}
       />
