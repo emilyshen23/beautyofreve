@@ -31,6 +31,7 @@ const total = SUBJECTS.length * STYLES.length
 console.log(`${existing.size}/${total} cached — generating ${queue.length} (~${queue.length * 150} credits)`)
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+const todo = queue.length
 let done = 0
 const failed = []
 
@@ -45,7 +46,7 @@ async function worker() {
       try {
         const { creditsRemaining } = await generateCell(subject, style)
         done++
-        console.log(`[${done}/${queue.length + done}] ${key} — ${creditsRemaining} credits left`)
+        console.log(`[${done}/${todo}] ${key} — ${creditsRemaining} credits left`)
         break
       } catch (err) {
         // 429 tells us how long to wait; other 5xx get a plain backoff.
