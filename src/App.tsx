@@ -331,7 +331,6 @@ export default function App() {
                 onClick={() => setBiome((cur) => (cur?.id === b.id ? null : b))}
               >
                 <img src={biomeSrc(b.id)} alt={b.label} draggable={false} />
-                <span className="biome-label">{b.label}</span>
               </button>
             ))}
           </div>
