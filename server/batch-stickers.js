@@ -22,8 +22,11 @@ const existing = new Set(
 
 const queue = STICKERS.filter((s) => !existing.has(s.id))
 const todo = queue.length
+// Counts roster members only — the directory can also hold stickers left
+// behind by an earlier roster, which are not "cached" for this run.
+const cached = STICKERS.length - todo
 console.log(
-  `${existing.size}/${STICKERS.length} cached — generating ${todo} (~${todo * 150} credits)`,
+  `${cached}/${STICKERS.length} cached — generating ${todo} (~${todo * 150} credits)`,
 )
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))

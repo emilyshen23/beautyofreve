@@ -1,79 +1,55 @@
-// The 68 pre-generated nature stickers. These ship as static transparent
-// assets — browsing the sheet never hits the API.
+// The 72 pre-generated stickers — all animals, chosen to be the cast a child
+// would want in a storybook. These ship as static transparent assets, so
+// browsing the sheet never hits the API.
 
 export const STICKER_CATEGORIES = [
   {
-    id: 'animals',
-    label: 'Animals',
+    id: 'woodland',
+    label: 'Woodland',
     names: [
-      'Fox', 'Rabbit', 'Squirrel', 'Deer', 'Hedgehog',
-      'Raccoon', 'Otter', 'Mountain goat', 'Bear cub',
+      'Fox', 'Rabbit', 'Squirrel', 'Deer', 'Hedgehog', 'Raccoon',
+      'Badger', 'Beaver', 'Chipmunk', 'Porcupine', 'Wolf', 'Bear cub',
+    ],
+  },
+  {
+    id: 'savanna',
+    label: 'Savanna & jungle',
+    names: [
+      'Elephant', 'Lion cub', 'Tiger cub', 'Giraffe', 'Zebra', 'Hippo',
+      'Monkey', 'Sloth', 'Meerkat', 'Panda', 'Red panda', 'Koala',
     ],
   },
   {
     id: 'birds',
     label: 'Birds',
     names: [
-      'Sparrow', 'Owl', 'Hummingbird', 'Robin',
-      'Swan', 'Flamingo', 'Toucan', 'Peacock',
+      'Sparrow', 'Owl', 'Hummingbird', 'Robin', 'Swan', 'Flamingo',
+      'Toucan', 'Peacock', 'Penguin', 'Puffin', 'Parrot', 'Duckling',
     ],
   },
   {
-    id: 'insects',
-    label: 'Insects & small creatures',
+    id: 'sea',
+    label: 'Sea & water',
     names: [
-      'Butterfly', 'Bee', 'Ladybug', 'Dragonfly',
-      'Snail', 'Caterpillar', 'Firefly', 'Spider',
+      'Fish', 'Seahorse', 'Jellyfish', 'Crab', 'Starfish', 'Turtle',
+      'Octopus', 'Otter', 'Whale', 'Dolphin', 'Seal pup', 'Narwhal',
     ],
   },
   {
-    id: 'water',
-    label: 'Water creatures',
-    // The spec called for 8 here but listed 7; Octopus fills the gap with a
-    // silhouette that stays readable at sticker size.
+    id: 'small',
+    label: 'Small creatures',
     names: [
-      'Fish', 'Seahorse', 'Jellyfish', 'Crab',
-      'Starfish', 'Turtle', 'Coral', 'Octopus',
+      'Butterfly', 'Bee', 'Ladybug', 'Dragonfly', 'Snail', 'Caterpillar',
+      'Firefly', 'Spider', 'Frog', 'Mouse', 'Bat', 'Grasshopper',
     ],
   },
   {
-    id: 'plants',
-    label: 'Trees & plants',
+    id: 'farm',
+    label: 'Farm & friends',
     names: [
-      'Oak tree', 'Pine tree', 'Palm tree', 'Cactus',
-      'Fern', 'Bamboo stalk', 'Bonsai tree', 'Leafy vine',
+      'Cat', 'Puppy', 'Pony', 'Piglet', 'Lamb', 'Calf',
+      'Rooster', 'Llama', 'Donkey', 'Goat kid', 'Mountain goat', 'Tortoise',
     ],
-  },
-  {
-    id: 'flowers',
-    label: 'Flowers',
-    names: [
-      'Sunflower', 'Rose', 'Tulip', 'Daisy',
-      'Lavender sprig', 'Lotus flower', 'Cherry blossom branch', 'Wildflower bouquet',
-    ],
-  },
-  {
-    id: 'sky',
-    label: 'Sky & landscape',
-    names: [
-      'Sun', 'Moon', 'Cloud', 'Rainbow', 'Lightning bolt',
-      'Raindrop', 'Snowflake', 'Mountain peak', 'Waterfall',
-    ],
-  },
-  {
-    id: 'ground',
-    label: 'Ground & misc nature',
-    names: [
-      'Mushroom', 'Pinecone', 'Acorn', 'Autumn leaf', 'Feather',
-      'Seashell', 'River stone', 'Honeycomb', 'Beehive', "Bird's nest with eggs",
-    ],
-  },
-  {
-    // Appended last so they fill the four empty cells in the bottom-right
-    // without shifting any existing sticker's position in the sheet.
-    id: 'extra',
-    label: 'More nature',
-    names: ['Frog', 'Wolf', 'Dandelion', 'Lily pad'],
   },
 ]
 
@@ -84,7 +60,7 @@ export const STICKERS = STICKER_CATEGORIES.flatMap((c) =>
   c.names.map((name) => ({ id: slugify(name), name, category: c.id })),
 )
 
-/* Shared visual treatment, so custom stickers sit next to the built-in 68.
+/* Shared visual treatment, so custom stickers sit next to the built-in 72.
    The only difference between the two templates is whether the subject is
    introduced as nature-themed. */
 const STICKER_STYLE =

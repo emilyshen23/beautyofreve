@@ -11,9 +11,9 @@ import type { Placed, Sticker, SceneState } from './lib/types'
 const DEFAULT_SIZE = 120
 const uid = () => Math.random().toString(36).slice(2, 9)
 
-/* The 68 built-ins are committed static assets, so the sheet is available
+/* The 72 built-ins are committed static assets, so the sheet is available
    without a backend — that's what makes the static deploy worth anything.
-   Only custom stickers and Craft need the server. */
+   Only custom characters and bringing a scene to life need the server. */
 const BUILT_IN: Sticker[] = STICKERS.map((s: Omit<Sticker, 'src'>) => ({
   ...s,
   src: `${import.meta.env.BASE_URL}stickers/${s.id}.webp`,
@@ -230,7 +230,7 @@ export default function App() {
   const craftHint = canCraft
     ? null
     : !apiOnline
-      ? 'Crafting needs the local server'
+      ? 'Bringing scenes to life needs the local server'
       : !hasSubject
         ? 'Drag a sticker onto the canvas'
         : !styleId
@@ -241,7 +241,7 @@ export default function App() {
     <div className="app">
       <header className="header">
         <span>Reve</span>
-        <span className="muted">your home for digital collages</span>
+        <span className="muted">your home for storytelling</span>
       </header>
 
       <div className="stage">
@@ -350,7 +350,7 @@ export default function App() {
               onClick={craft}
               title={craftHint ?? undefined}
             >
-              Craft
+              Bring it to life
               <ArrowUp />
             </button>
             </div>
@@ -363,7 +363,7 @@ export default function App() {
           Sticker sheet
         </button>
         <button className={`tab${tab === 'own' ? ' active' : ''}`} onClick={() => setTab('own')}>
-          Own stickers
+          Your characters
         </button>
       </div>
 
@@ -373,7 +373,7 @@ export default function App() {
         ) : !apiOnline ? (
           <div className="own">
             <p className="own-note">
-              Minting stickers needs the local server. Run <code>npm run dev</code> to create your own.
+              Making characters needs the local server. Run <code>npm run dev</code> to create your own.
             </p>
           </div>
         ) : custom.length || minting ? (
@@ -427,10 +427,10 @@ function MintInput({ value, onChange, onSubmit, busy }: MintProps) {
             if (ready) onSubmit()
           }
         }}
-        placeholder="Create your own sticker"
+        placeholder="Create your own character"
         disabled={busy}
       />
-      <button className={`submit${ready ? ' ready' : ''}`} type="submit" disabled={!ready} aria-label="Create sticker">
+      <button className={`submit${ready ? ' ready' : ''}`} type="submit" disabled={!ready} aria-label="Create character">
         <ArrowUp />
       </button>
     </form>
