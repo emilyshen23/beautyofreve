@@ -428,9 +428,26 @@ button {
   border-bottom: 1px solid var(--line);
 }
 
+/* Magic stickers are atmosphere, not cast, so their cells carry the same
+   gradient the canvas uses while a scene is being generated — quiet enough to
+   read as a backdrop, and clipped so it can't bleed into neighbouring cells. */
+.sheet-cell.magic {
+  --grain-blur: 14px;
+
+  isolation: isolate;
+  overflow: hidden;
+  background: #2b281d;
+}
+
+.sheet-cell.magic::before {
+  opacity: 0.5;
+  animation: churn 9s ease-in-out infinite alternate;
+}
+
 .sheet-cell img {
   position: absolute;
   inset: 0;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -606,8 +623,12 @@ button {
 
 /* Muted heat-map blobs — sage, steel blue, ochre and dusty plum. They visibly
    churn because drifting the background alone read as almost static, so the
-   layer also scales and rotates. */
-.grain::before {
+   layer also scales and rotates.
+
+   The magic sticker cells share this exact layer so the two read as the same
+   material; they just sit further back. */
+.grain::before,
+.sheet-cell.magic::before {
   content: '';
   position: absolute;
   inset: -55%;

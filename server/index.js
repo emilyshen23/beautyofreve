@@ -80,9 +80,9 @@ app.post('/api/stickers/custom', async (req, res) => {
   if (!name) return res.status(400).json({ error: 'Name required' })
 
   try {
-    // Custom stickers aren't constrained to nature, but wear the same treatment.
+    // Custom characters aren't constrained to nature, but wear the same treatment.
     const id = `${slugify(name)}-${Date.now().toString(36)}`
-    await generateSticker(name, { nature: false, dir: CUSTOM_DIR, id })
+    await generateSticker(name, { kind: 'custom', dir: CUSTOM_DIR, id })
     console.log(`minted sticker ${id}`)
     res.json({ sticker: { id, name, src: `/api/assets/${id}.webp`, custom: true } })
   } catch (err) {

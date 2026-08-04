@@ -41,6 +41,7 @@ async function worker() {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       try {
         const { creditsRemaining } = await generateSticker(sticker.name, {
+          kind: sticker.magic ? 'magic' : (sticker.mood ?? 'animal'),
           dir: STICKER_DIR,
           id: sticker.id,
         })

@@ -4,6 +4,12 @@ export type Sticker = {
   category?: string
   src: string
   custom?: boolean
+  /** Atmosphere rather than cast — rendered in the sheet's magic columns. */
+  magic?: boolean
+  /** Flags the scattered tricksters ('mischievous'). Drives no UI: the
+   *  difference lives in the artwork. Typed loosely because it originates in
+   *  untyped shared/stickers.js, where the values are defined. */
+  mood?: string
 }
 
 /** A sticker placed on the canvas. Coordinates are in canvas design space

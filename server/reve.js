@@ -66,10 +66,10 @@ const CUTOUT = [{ process: 'remove_background' }]
  * never render larger than a few hundred px, so they're stored as 512px WebP
  * with the alpha channel preserved.
  */
-export async function generateSticker(name, { nature = true, dir = CUSTOM_DIR, id } = {}) {
+export async function generateSticker(name, { kind = 'animal', dir = CUSTOM_DIR, id } = {}) {
   const { stickerPrompt, slugify } = await import('../shared/stickers.js')
   const { buffer, creditsRemaining } = await callReve({
-    prompt: stickerPrompt(name, { nature }),
+    prompt: stickerPrompt(name, { kind }),
     postprocessing: CUTOUT,
   })
 

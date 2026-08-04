@@ -18,9 +18,11 @@ const BUILT_IN: Sticker[] = STICKERS.map((s: Omit<Sticker, 'src'>) => ({
   ...s,
   src: `${import.meta.env.BASE_URL}stickers/${s.id}.webp`,
 }))
+const CHARACTERS = BUILT_IN.filter((s) => !s.magic)
+const MAGIC = BUILT_IN.filter((s) => s.magic)
 
 export default function App() {
-  const [stickers] = useState<Sticker[]>(BUILT_IN)
+  const [stickers] = useState<Sticker[]>(CHARACTERS)
   const [custom, setCustom] = useState<Sticker[]>([])
   const [apiOnline, setApiOnline] = useState(false)
   const [tab, setTab] = useState<'sheet' | 'own'>('sheet')
@@ -232,7 +234,7 @@ export default function App() {
     : !apiOnline
       ? 'Bringing scenes to life needs the local server'
       : !hasSubject
-        ? 'Drag a sticker onto the canvas'
+        ? 'Bring a character to the story'
         : !styleId
           ? 'Pick a style first'
           : null
@@ -360,7 +362,7 @@ export default function App() {
 
       <div className="tabs">
         <button className={`tab${tab === 'sheet' ? ' active' : ''}`} onClick={() => setTab('sheet')}>
-          Sticker sheet
+          Character sheet
         </button>
         <button className={`tab${tab === 'own' ? ' active' : ''}`} onClick={() => setTab('own')}>
           Your characters
@@ -369,7 +371,7 @@ export default function App() {
 
       <div className="panel">
         {tab === 'sheet' ? (
-          <StickerSheet stickers={stickers} onDragStart={startDrag} />
+          <StickerSheet stickers={stickers} magic={MAGIC} onDragStart={startDrag} />
         ) : !apiOnline ? (
           <div className="own">
             <p className="own-note">

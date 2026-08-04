@@ -1,9 +1,19 @@
 # beautyofreve — Nature Sticker Craft
 
-A drag-and-drop sticker collage tool. Pick from 72 pre-generated animal
-stickers (or make your own characters), arrange them freely on a canvas, then
-Reve reinterprets the whole arrangement as one cohesive scene in the style you
-pick. The cast is all animals — the sort a child would put in a storybook.
+A drag-and-drop sticker collage tool. Pick from 78 pre-generated stickers (or
+make your own characters), arrange them freely on a canvas, then Reve
+reinterprets the whole arrangement as one cohesive scene in the style you pick.
+
+The sheet is 66 animal characters — the sort a child would put in a storybook —
+plus 12 "magic" effects (fireflies, sunbeams, drifting dandelion seeds). The
+magic stickers sit in the right-hand columns, marked by the same gradient the
+canvas shows while a scene is generating.
+
+Six characters are flagged `mood: 'mischievous'` — a grumpy storm cloud, a sly
+shadow crow and friends, drawn in a cooler, darker palette with exaggerated
+grumpy expressions. They're scattered through the ordinary cast rather than
+grouped, so a child discovers them while browsing instead of finding a
+"villains" shelf. The flag drives no UI; the difference lives in the artwork.
 
 Two deploys:
 
@@ -66,14 +76,14 @@ stored as WebP).
 
 ## Generating the stickers
 
-The 72 animal built-ins are generated once and committed to `public/stickers/`:
+The 78 built-ins are generated once and committed to `public/stickers/`:
 
 ```bash
 npm run stickers
 ```
 
 Skips anything already on disk, so it's safe to re-run after a failure. Each
-generation costs 150 credits (~10,800 for a full run). Custom characters from the
+generation costs 150 credits (~11,700 for a full run). Custom characters from the
 **Your characters** tab are live calls, one per submission, cached in
 `generated/custom/`.
 
