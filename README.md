@@ -4,7 +4,7 @@ A drag-and-drop sticker collage tool. Pick from 78 pre-generated stickers (or
 make your own characters), arrange them freely on a canvas, then Reve
 reinterprets the whole arrangement as one cohesive scene in the style you pick.
 
-The sheet is 66 animal characters — the sort a child would put in a storybook —
+The sheet is 68 animal characters — the sort a child would put in a storybook —
 plus 12 "magic" effects (fireflies, sunbeams, drifting dandelion seeds). The
 magic stickers sit in the right-hand columns, marked by the same gradient the
 canvas shows while a scene is generating.
@@ -52,6 +52,24 @@ Each placed sticker is an independent object:
 Positions are stored in canvas design space (954 × 431), not screen pixels, so
 an arrangement survives a window resize.
 
+## Settings
+
+Five nature backdrops — enchanted forest, flower meadow, snowy mountains,
+coral reef, desert oasis — sit in a rail beside the canvas. Each is a static
+plate generated once into `public/biomes/`:
+
+```bash
+npm run biomes
+```
+
+Picking one swaps it in behind the characters. It deliberately won't match
+them: the plate is painted, the characters are flat die-cut cut-outs, and
+nothing casts a shadow. That mismatch is expected — the plate is a stage, not
+the show. **Bring it to life** is the step that fuses backdrop and cast into
+one picture, and the compose prompt says so outright, asking for unified
+lighting, contact shadows and corrected scale. In testing, an owl left
+floating in mid-air came back perched on a branch.
+
 ## How Craft works
 
 Rather than describing coordinates in words — which models follow unreliably —
@@ -76,14 +94,14 @@ stored as WebP).
 
 ## Generating the stickers
 
-The 78 built-ins are generated once and committed to `public/stickers/`:
+The 80 built-ins are generated once and committed to `public/stickers/`:
 
 ```bash
 npm run stickers
 ```
 
 Skips anything already on disk, so it's safe to re-run after a failure. Each
-generation costs 150 credits (~11,700 for a full run). Custom characters from the
+generation costs 150 credits (~12,000 for a full run). Custom characters from the
 **Your characters** tab are live calls, one per submission, cached in
 `generated/custom/`.
 

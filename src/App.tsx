@@ -5,6 +5,7 @@ import PlacedSticker from './components/PlacedSticker'
 import { CaretDown, ArrowUp, Download } from './components/icons'
 import { flattenCanvas, CANVAS_W, CANVAS_H } from './lib/flatten'
 import { SCENE_STYLES } from '../shared/scene.js'
+import { BIOMES } from '../shared/biomes.js'
 import { STICKERS } from '../shared/stickers.js'
 import type { Placed, Sticker, SceneState } from './lib/types'
 
@@ -21,6 +22,10 @@ const BUILT_IN: Sticker[] = STICKERS.map((s: Omit<Sticker, 'src'>) => ({
 const CHARACTERS = BUILT_IN.filter((s) => !s.magic)
 const MAGIC = BUILT_IN.filter((s) => s.magic)
 
+type Biome = { id: string; label: string; scene: string }
+const BIOME_LIST: Biome[] = BIOMES
+const biomeSrc = (id: string) => `${import.meta.env.BASE_URL}biomes/${id}.webp`
+
 export default function App() {
   const [stickers] = useState<Sticker[]>(CHARACTERS)
   const [custom, setCustom] = useState<Sticker[]>([])
@@ -35,6 +40,7 @@ export default function App() {
   const [scene, setScene] = useState<SceneState>({ status: 'idle' })
   /** The last crafted image, kept as the canvas backdrop so work can continue. */
   const [background, setBackground] = useState<string | null>(null)
+  const [biome, setBiome] = useState<Biome | null>(null)
 
   const [prompt, setPrompt] = useState('')
   const [minting, setMinting] = useState(false)
@@ -168,7 +174,7 @@ export default function App() {
     setScene({ status: 'loading' })
     setSelected(null)
     try {
-      const reference = await flattenCanvas(placed, background)
+      const reference = await flattenCanvas(placed, backdrop)
       const res = await fetch('/api/craft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -177,6 +183,7 @@ export default function App() {
           reference,
           names: [...new Set(placed.map((p) => p.name))],
           mode: craftMode,
+          setting: biome?.scene,
         }),
       })
       const data = await res.json()
@@ -225,6 +232,9 @@ export default function App() {
   /* With a scene already on the canvas and no new stickers, Craft restyles it
      — otherwise picking a different style after a craft would do nothing. */
   const craftMode = background ? (placed.length ? 'add' : 'restyle') : 'compose'
+  /* What is actually showing behind the stickers: a finished scene once one
+     exists, otherwise the chosen biome plate. */
+  const backdrop = background ?? (biome ? biomeSrc(biome.id) : null)
   const hasSubject = placed.length > 0 || Boolean(background)
   const canCraft =
     apiOnline && Boolean(styleId) && hasSubject && scene.status !== 'loading'
@@ -260,21 +270,22 @@ export default function App() {
             </button>
           </div>
 
+          <div className="stage-body">
           <div
             className="canvas"
             ref={canvasRef}
             onPointerDown={() => setSelected(null)}
             style={{ ['--canvas-w' as string]: CANVAS_W, ['--canvas-h' as string]: CANVAS_H }}
           >
-            {background && (
+            {backdrop && (
               <motion.img
-                key={background}
+                key={backdrop}
                 className="scene-img"
-                src={background}
-                alt="Crafted scene"
+                src={backdrop}
+                alt={background ? 'Crafted scene' : (biome?.label ?? '')}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+                transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
               />
             )}
 
@@ -305,6 +316,25 @@ export default function App() {
             </AnimatePresence>
 
             {scene.status === 'error' && <p className="canvas-note">{scene.message}</p>}
+          </div>
+
+          {/* Switching biomes just swaps the plate behind the stickers. They
+              won't match it, and that's fine — Bring it to life is what fuses
+              backdrop and cast into one painting. */}
+          <div className="biomes" role="group" aria-label="Story setting">
+            {BIOME_LIST.map((b) => (
+              <button
+                key={b.id}
+                className={`biome${biome?.id === b.id ? ' on' : ''}`}
+                aria-pressed={biome?.id === b.id}
+                title={b.label}
+                onClick={() => setBiome((cur) => (cur?.id === b.id ? null : b))}
+              >
+                <img src={biomeSrc(b.id)} alt={b.label} draggable={false} />
+                <span className="biome-label">{b.label}</span>
+              </button>
+            ))}
+          </div>
           </div>
 
           <div className="controls-row">

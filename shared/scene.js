@@ -62,7 +62,7 @@ export const SCENE_STYLES = [
  *   add     — a finished scene with new cut-outs laid on top
  *   restyle — a finished scene to be repainted in a different style
  */
-export function buildScenePrompt(styleId, stickerNames, { mode = 'compose' } = {}) {
+export function buildScenePrompt(styleId, stickerNames, { mode = 'compose', setting } = {}) {
   const style = SCENE_STYLES.find((s) => s.id === styleId)
   if (!style) return null
 
@@ -91,15 +91,23 @@ export function buildScenePrompt(styleId, stickerNames, { mode = 'compose' } = {
     )
   }
 
+  /* <frame1> is a backdrop with flat cut-outs sitting on top of it, and they
+     will not match — different lighting, different scale, no shadows. Saying
+     so plainly is what turns the collage into one painting. */
+  const inSetting = setting ? ` The scene is set in ${setting}.` : ''
+
   return (
     `Using the composition shown in <frame1> as the layout guide, create one ` +
     `cohesive, unified ${style.name} scene that naturally brings together ` +
-    `everything shown: ${stickerNames.join(', ')}. Keep the relative placement, ` +
-    `scale and arrangement of each element close to the reference, but fully ` +
-    `repaint everything into one atmospheric, connected scene — do not leave the ` +
-    `elements looking like separate flat stickers pasted on top of each other. ` +
-    `Invent a believable little world that ties them together: ground for them ` +
-    `to sit on, sky behind them, and soft shadows anchoring each one. ` +
+    `everything shown: ${stickerNames.join(', ')}.${inSetting} The reference is ` +
+    `a rough collage — flat sticker cut-outs laid over a backdrop, not yet ` +
+    `blended. Keep the relative placement, scale and arrangement of each ` +
+    `element close to the reference, but fully repaint everything, backdrop and ` +
+    `characters alike, into one atmospheric, connected picture. Unify the ` +
+    `lighting so a single light source falls across everything, ground each ` +
+    `character with a soft contact shadow, adjust scale so nothing floats or ` +
+    `looks pasted, and let the setting wrap around them. Nothing in the final ` +
+    `image should read as a flat sticker on top of a photo. ` +
     `${style.block} ${CHILD_FRIENDLY}`
   )
 }

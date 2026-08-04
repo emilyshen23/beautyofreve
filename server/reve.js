@@ -84,3 +84,25 @@ export async function generateSticker(name, { kind = 'animal', dir = CUSTOM_DIR,
 
   return { file, creditsRemaining }
 }
+
+/** Biome backdrop plates. Static, committed, served by Vite like the stickers. */
+export const BIOME_DIR = join(root, 'public', 'biomes')
+
+/**
+ * Generates one biome backdrop. Wide 2:1 to match the canvas, and no
+ * background removal — this one *is* the background.
+ */
+export async function generateBiome(biome) {
+  const { biomePrompt } = await import('../shared/biomes.js')
+  const { buffer, creditsRemaining } = await callReve({
+    prompt: biomePrompt(biome),
+    aspectRatio: '2:1',
+  })
+
+  const webp = await sharp(buffer).resize(1908, 954).webp({ quality: 86 }).toBuffer()
+  const file = `${biome.id}.webp`
+  await mkdir(BIOME_DIR, { recursive: true })
+  await writeFile(join(BIOME_DIR, file), webp)
+
+  return { file, creditsRemaining }
+}

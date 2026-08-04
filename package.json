@@ -12,7 +12,8 @@
     "generate:all": "node --env-file=.env server/batch.js",
     "stickers": "node --env-file=.env server/batch-stickers.js",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "biomes": "node --env-file=.env server/batch-biomes.js"
   },
   "dependencies": {
     "express": "^5.1.0",

@@ -95,8 +95,8 @@ app.post('/api/craft', async (req, res) => {
   // Checked first, so probing with malformed bodies can't sidestep the cap.
   if (overLimit(req)) return res.status(429).json({ error: 'Hourly limit reached — try again later' })
 
-  const { styleId, reference, names, mode } = req.body ?? {}
-  const prompt = buildScenePrompt(styleId, names ?? [], { mode })
+  const { styleId, reference, names, mode, setting } = req.body ?? {}
+  const prompt = buildScenePrompt(styleId, names ?? [], { mode, setting })
 
   if (!prompt) return res.status(400).json({ error: 'Unknown style' })
   if (!reference) return res.status(400).json({ error: 'Missing canvas reference' })

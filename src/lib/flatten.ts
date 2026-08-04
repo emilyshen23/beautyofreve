@@ -40,8 +40,9 @@ export async function flattenCanvas(
   const scale = OUT_W / CANVAS_W
   const yOffset = (OUT_H - CANVAS_H * scale) / 2
 
-  /* A previously crafted scene sits underneath, so a second Craft continues
-     from the finished image. Drawn full-bleed: the letterboxing above lines
+  /* Whatever is showing behind the stickers — a chosen biome plate, or a
+     previously crafted scene — sits underneath, so Craft continues from what
+     the user can actually see. Drawn full-bleed: the letterboxing above lines
      the sticker layer up with the `object-fit: cover` crop on screen. */
   if (background) {
     ctx.drawImage(await loadImage(background), 0, 0, OUT_W, OUT_H)

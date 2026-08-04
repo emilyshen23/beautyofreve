@@ -1,4 +1,4 @@
-// The 78 pre-generated stickers: 66 characters plus 12 "magic" effects.
+// The 80 pre-generated stickers: 68 characters plus 12 "magic" effects.
 // These ship as static transparent assets, so browsing the sheet never hits
 // the API.
 //
@@ -18,7 +18,7 @@ export const STICKER_CATEGORIES = [
       'Fox', 'Rabbit', { name: 'Sneaky shadow fox', mood: 'mischievous' },
       'Squirrel', 'Deer', 'Hedgehog', 'Raccoon', 'Beaver',
       { name: 'Grouchy rock troll', mood: 'mischievous' },
-      'Chipmunk', 'Wolf', 'Bear cub',
+      'Chipmunk', 'Mole', 'Wolf', 'Bear cub',
     ],
   },
   {
@@ -35,7 +35,7 @@ export const STICKER_CATEGORIES = [
     names: [
       'Owl', 'Hummingbird', 'Swan', 'Flamingo', 'Toucan', 'Peacock',
       { name: 'Sly shadow crow', mood: 'mischievous' },
-      'Penguin', 'Puffin', 'Parrot', 'Duckling',
+      'Robin', 'Penguin', 'Puffin', 'Parrot', 'Duckling',
     ],
   },
   {
