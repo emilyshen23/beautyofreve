@@ -97,9 +97,14 @@ button {
   height: 100%;
 }
 
-/* The craft table itself: a soft grainy gradient in beige, gold and warm
-   brown. It drifts on its own, and parallaxes toward the pointer via
-   `translate` so the movement never costs a repaint. */
+/* The craft table itself: strong grainy fields of gold, terracotta, deep
+   brown and sage over cream.
+
+   The colour layer moves by `rotate`/`scale` rather than by animating
+   gradient stops — a transform stays on the compositor, where animating
+   `background-position` on a full-screen gradient repaints every frame. The
+   generous negative inset gives the rotation room so the corners never
+   sweep into view. */
 
 .page-backdrop {
   --px: 0;
@@ -107,44 +112,63 @@ button {
 
   position: fixed;
   z-index: -1;
-  inset: -12%;
-  background:
-    radial-gradient(42% 46% at 18% 22%, #f3e6cd 0%, rgba(243, 230, 205, 0) 72%),
-    radial-gradient(46% 50% at 78% 18%, #e3c796 0%, rgba(227, 199, 150, 0) 74%),
-    radial-gradient(50% 54% at 68% 78%, #d9b98a 0%, rgba(217, 185, 138, 0) 72%),
-    radial-gradient(44% 48% at 22% 82%, #c6a179 0%, rgba(198, 161, 121, 0) 74%),
-    radial-gradient(60% 60% at 50% 50%, #f7f0e3 0%, rgba(247, 240, 227, 0) 80%),
-    var(--bg);
-  background-repeat: no-repeat;
-  background-size: 150% 150%, 150% 150%, 160% 160%, 150% 150%, 170% 170%;
-  animation: table-drift 32s ease-in-out infinite alternate;
-  translate: calc(var(--px) * 26px) calc(var(--py) * 26px);
-  transition: translate 900ms cubic-bezier(0.23, 1, 0.32, 1);
+  /* Wider than the viewport so the parallax translate can never drag an edge
+     into view. */
+  inset: -60px;
+  overflow: hidden;
+  background: #f2e7d3;
 }
 
-/* Grain, so it reads as paper rather than a digital gradient. */
+.page-backdrop::before {
+  content: '';
+  position: absolute;
+  inset: -45%;
+  background:
+    radial-gradient(38% 42% at 20% 24%, #efa53c 0%, rgba(239, 165, 60, 0) 70%),
+    radial-gradient(40% 44% at 80% 18%, #cd6f45 0%, rgba(205, 111, 69, 0) 72%),
+    radial-gradient(46% 50% at 74% 78%, #8d5836 0%, rgba(141, 88, 54, 0) 70%),
+    radial-gradient(42% 46% at 20% 80%, #93a26e 0%, rgba(147, 162, 110, 0) 72%),
+    radial-gradient(34% 38% at 52% 56%, #f6c56a 0%, rgba(246, 197, 106, 0) 68%),
+    radial-gradient(58% 58% at 46% 42%, #fdf7ec 0%, rgba(253, 247, 236, 0) 74%);
+  background-repeat: no-repeat;
+  animation: table-churn 19s ease-in-out infinite alternate;
+  /* Parallax rides on the same layer, added to the animation's transform via
+     the outer element's translate. */
+  will-change: transform;
+}
+
+/* Parallax lives on the wrapper so it can't fight the keyframes. */
+.page-backdrop {
+  translate: calc(var(--px) * 38px) calc(var(--py) * 38px);
+  transition: translate 800ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes table-churn {
+  from {
+    transform: rotate(-8deg) scale(1.05) translate(-2%, -1%);
+  }
+  to {
+    transform: rotate(9deg) scale(1.22) translate(3%, 2%);
+  }
+}
+
+/* Grain, so it reads as printed paper rather than a digital gradient. */
 .page-backdrop::after {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.52;
   mix-blend-mode: multiply;
-}
-
-@keyframes table-drift {
-  from {
-    background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%, 50% 50%;
-  }
-  to {
-    background-position: 24% 18%, 72% 26%, 66% 70%, 26% 66%, 44% 56%;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .page-backdrop {
-    animation: none;
     translate: none;
+  }
+
+  .page-backdrop::before {
+    animation: none;
   }
 }
 
