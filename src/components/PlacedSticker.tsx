@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import { Copy, Trash, LockOpen, LockClosed } from './icons'
 import type { Placed } from '../lib/types'
 
 type Props = {
@@ -7,6 +8,8 @@ type Props = {
   selected: boolean
   onSelect: () => void
   onChange: (patch: Partial<Placed>) => void
+  onDuplicate: () => void
+  onDelete: () => void
   canvasEl: HTMLElement | null
 }
 
@@ -14,7 +17,15 @@ type Corner = 'nw' | 'ne' | 'sw' | 'se'
 
 const DEG = 180 / Math.PI
 
-export default function PlacedSticker({ item, selected, onSelect, onChange, canvasEl }: Props) {
+export default function PlacedSticker({
+  item,
+  selected,
+  onSelect,
+  onChange,
+  onDuplicate,
+  onDelete,
+  canvasEl,
+}: Props) {
   const [dragging, setDragging] = useState(false)
   const start = useRef({ x: 0, y: 0, item })
 
@@ -105,61 +116,42 @@ export default function PlacedSticker({ item, selected, onSelect, onChange, canv
       <img src={item.src} alt={item.name} draggable={false} />
       <div className="placed-hit" onPointerDown={(e) => begin(e, 'move')} />
 
-      {/* Revealed on hover (and while selected) so a sticker can be pinned
-          without first selecting it. */}
-      <button
-        className={`lock${item.locked ? ' on' : ''}`}
-        title={item.locked ? 'Unlock position' : 'Lock position'}
-        aria-pressed={item.locked ?? false}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation()
-          onChange({ locked: !item.locked })
-        }}
-      >
-        {item.locked ? <LockClosed /> : <LockOpen />}
-      </button>
-
       {selected && (
-        <div className={`placed-frame${item.locked ? ' locked' : ''}`}>
-          {!item.locked && (
-            <>
-              {(['nw', 'ne', 'sw', 'se'] as Corner[]).map((c) => (
-                <div key={c} className={`handle ${c}`} onPointerDown={(e) => begin(e, c)} />
-              ))}
-              <div className="handle rotate" onPointerDown={(e) => begin(e, 'rotate')} />
-            </>
-          )}
-        </div>
+        <>
+          <div className={`placed-frame${item.locked ? ' locked' : ''}`}>
+            {!item.locked && (
+              <>
+                {(['nw', 'ne', 'sw', 'se'] as Corner[]).map((c) => (
+                  <div key={c} className={`handle ${c}`} onPointerDown={(e) => begin(e, c)} />
+                ))}
+                <div className="handle rotate" onPointerDown={(e) => begin(e, 'rotate')} />
+              </>
+            )}
+          </div>
+
+          {/* The same actions the keyboard offers, made visible — a child is
+              never going to discover Cmd+C or Backspace. */}
+          <div className="sticker-tools" onPointerDown={(e) => e.stopPropagation()}>
+            <button
+              className={item.locked ? 'on' : undefined}
+              title={item.locked ? 'Unlock' : 'Lock in place'}
+              aria-pressed={item.locked ?? false}
+              onClick={(e) => {
+                e.stopPropagation()
+                onChange({ locked: !item.locked })
+              }}
+            >
+              {item.locked ? <LockClosed /> : <LockOpen />}
+            </button>
+            <button title="Make another" onClick={(e) => { e.stopPropagation(); onDuplicate() }}>
+              <Copy />
+            </button>
+            <button title="Remove" onClick={(e) => { e.stopPropagation(); onDelete() }}>
+              <Trash />
+            </button>
+          </div>
+        </>
       )}
     </motion.div>
-  )
-}
-
-function LockOpen() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M17 10h1a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h8V7a3 3 0 0 1 6 0"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function LockClosed() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M6 10h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Zm3 0V7a3 3 0 0 1 6 0v3"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   )
 }

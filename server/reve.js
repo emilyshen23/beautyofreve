@@ -42,8 +42,25 @@ export async function callReve({ prompt, aspectRatio = '1:1', references, postpr
 
   if (!res.ok) {
     const detail = await res.text()
-    throw Object.assign(new Error(detail.slice(0, 300)), {
+    /* Surface something a child can read rather than the raw JSON body —
+       this string ends up printed on the canvas. */
+    let message = 'Something went wrong. Try again in a moment.'
+    try {
+      const code = JSON.parse(detail).error_code
+      if (code === 'PARTNER_API_CLOSED') {
+        message = 'Picture-making is unavailable right now.'
+      } else if (res.status === 429) {
+        message = 'Taking a short breather — try again in a minute.'
+      } else if (res.status === 402) {
+        message = 'Out of picture credits for now.'
+      }
+    } catch {
+      /* keep the generic message */
+    }
+
+    throw Object.assign(new Error(message), {
       status: res.status,
+      detail: detail.slice(0, 300),
       retryAfter: Number(res.headers.get('retry-after')) || null,
     })
   }

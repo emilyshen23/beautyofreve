@@ -117,7 +117,8 @@ app.post('/api/craft', async (req, res) => {
     console.log(`crafted ${file} — ${creditsRemaining} credits left`)
     res.json({ image: `/api/scenes/${file}` })
   } catch (err) {
-    console.error('craft failed:', err.message)
+    // Log the raw detail; send only the friendly line to the browser.
+    console.error('craft failed:', err.message, err.detail ?? '')
     res.status(err.status ?? 500).json({ error: err.message })
   }
 })

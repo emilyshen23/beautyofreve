@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import StickerSheet from './components/StickerSheet'
 import PlacedSticker from './components/PlacedSticker'
-import { CaretDown, ArrowUp, Download } from './components/icons'
+import { CaretDown, ArrowUp, Download, DropHere } from './components/icons'
+import Sparkles, { makeBurst, type Burst } from './components/Sparkles'
 import { flattenCanvas, CANVAS_W, CANVAS_H } from './lib/flatten'
 import { SCENE_STYLES } from '../shared/scene.js'
 import { BIOMES } from '../shared/biomes.js'
@@ -11,6 +12,16 @@ import type { Placed, Sticker, SceneState } from './lib/types'
 
 const DEFAULT_SIZE = 120
 const uid = () => Math.random().toString(36).slice(2, 9)
+
+/* A craft takes about a minute. Left as a bare gradient that reads as "stuck"
+   to a child, so the wait narrates what is supposedly happening. */
+const WORKING_CAPTIONS = [
+  'Mixing the colors…',
+  'Waking up your characters…',
+  'Painting the sky…',
+  'Adding the tiny details…',
+  'Almost there…',
+]
 
 /* The 72 built-ins are committed static assets, so the sheet is available
    without a backend — that's what makes the static deploy worth anything.
@@ -46,6 +57,8 @@ export default function App() {
   const [minting, setMinting] = useState(false)
   const [justMinted, setJustMinted] = useState<string | null>(null)
 
+  const [caption, setCaption] = useState(0)
+  const [bursts, setBursts] = useState<Burst[]>([])
   const [ghost, setGhost] = useState<{ src: string; x: number; y: number } | null>(null)
   const dragged = useRef<Sticker | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -99,6 +112,10 @@ export default function App() {
       setPlaced((p) => [...p, item])
       setSelected(item.uid)
       setScene({ status: 'idle' })
+
+      const burst = makeBurst(x + DEFAULT_SIZE / 2, y + DEFAULT_SIZE / 2)
+      setBursts((b) => [...b, burst])
+      setTimeout(() => setBursts((b) => b.filter((x) => x.id !== burst.id)), 1000)
     }
 
     window.addEventListener('pointermove', move)
@@ -108,6 +125,30 @@ export default function App() {
   const update = useCallback((uidKey: string, patch: Partial<Placed>) => {
     setPlaced((p) => p.map((it) => (it.uid === uidKey ? { ...it, ...patch } : it)))
   }, [])
+
+  /* Shared by the on-canvas toolbar and the keyboard shortcuts, so the two
+     can't drift apart. Duplicates start unlocked or they'd land immovable. */
+  const duplicate = useCallback((item: Placed) => {
+    const copy = { ...item, uid: uid(), x: item.x + 26, y: item.y + 26, locked: false }
+    setPlaced((p) => [...p, copy])
+    setSelected(copy.uid)
+  }, [])
+
+  const remove = useCallback((uidKey: string) => {
+    setPlaced((p) => p.filter((it) => it.uid !== uidKey))
+    setSelected(null)
+  }, [])
+
+  // Advance the waiting caption while a craft is in flight.
+  useEffect(() => {
+    if (scene.status !== 'loading') return
+    setCaption(0)
+    const id = setInterval(
+      () => setCaption((c) => Math.min(c + 1, WORKING_CAPTIONS.length - 1)),
+      11000,
+    )
+    return () => clearInterval(id)
+  }, [scene.status])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -121,20 +162,10 @@ export default function App() {
         clipboard.current = item
       } else if (meta && e.key === 'v' && clipboard.current) {
         e.preventDefault()
-        // The duplicate starts unlocked, or it would land immovable.
-        const copy = {
-          ...clipboard.current,
-          uid: uid(),
-          x: clipboard.current.x + 24,
-          y: clipboard.current.y + 24,
-          locked: false,
-        }
-        setPlaced((p) => [...p, copy])
-        setSelected(copy.uid)
+        duplicate(clipboard.current)
       } else if ((e.key === 'Backspace' || e.key === 'Delete') && item) {
         e.preventDefault()
-        setPlaced((p) => p.filter((it) => it.uid !== item.uid))
-        setSelected(null)
+        remove(item.uid)
       } else if (e.key === 'Escape') {
         setSelected(null)
         setMenuOpen(false)
@@ -143,7 +174,7 @@ export default function App() {
 
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [placed, selected])
+  }, [placed, selected, duplicate, remove])
 
   async function mint() {
     const name = prompt.trim()
@@ -252,7 +283,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <span>Reve</span>
+        <strong>Reve</strong>
         <span className="muted">your home for storytelling</span>
       </header>
 
@@ -299,6 +330,8 @@ export default function App() {
                   selected={selected === item.uid}
                   onSelect={() => setSelected(item.uid)}
                   onChange={(patch) => update(item.uid, patch)}
+                  onDuplicate={() => duplicate(item)}
+                  onDelete={() => remove(item.uid)}
                   canvasEl={canvasRef.current}
                 />
               ))}
@@ -311,9 +344,33 @@ export default function App() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.35 }}
-                />
+                >
+                  <div className="working">
+                    <motion.p
+                      key={caption}
+                      className="working-caption"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                    >
+                      {WORKING_CAPTIONS[caption]}
+                    </motion.p>
+                    <div className="working-dots" aria-hidden="true">
+                      <span /><span /><span />
+                    </div>
+                  </div>
+                </motion.div>
               )}
             </AnimatePresence>
+
+            {bursts.map((b) => <Sparkles key={b.id} burst={b} />)}
+
+            {!backdrop && !placed.length && scene.status !== 'loading' && (
+              <div className="canvas-empty">
+                <DropHere />
+                <span>Drag a character here to start your story</span>
+              </div>
+            )}
 
             {scene.status === 'error' && <p className="canvas-note">{scene.message}</p>}
           </div>

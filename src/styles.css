@@ -7,25 +7,40 @@
 :root {
   --zoom: 0.75;
 
-  /* Sampled from the Figma frame (1440x1024). */
-  --bg: #141414;
-  --panel: #000;
-  --group: #212020;
-  --chip: #2b2b2b;
-  --dim: #b0afaf;
-  --dim-soft: rgba(176, 175, 175, 0.6);
-  --line: rgba(255, 255, 255, 0.12);
-  --select: #0d99ff;
+  /* Nature-toned and warm. The old near-black chrome read as a pro design
+     tool; a craft-table cream reads as somewhere a child is invited to play,
+     and it's also what the die-cut white sticker borders sit best against. */
+  --bg: #f4ede1;
+  --panel: #e7d8be;
+  --card: #fff;
+
+  --ink: #3a3128;
+  --ink-soft: rgba(58, 49, 40, 0.58);
+  --ink-faint: rgba(58, 49, 40, 0.34);
+
+  --accent: #c9724e;
+  --accent-deep: #ad5c3b;
+  --sage: #7e9070;
+  --cream: #fbf6ee;
+
+  /* Selection is terracotta, not the Figma blue it used to be. */
+  --select: #c9724e;
+  --line: rgba(58, 49, 40, 0.16);
+
+  --r-lg: 26px;
+  --r-md: 16px;
+  --r-sm: 10px;
 
   --canvas-w: 954;
   --canvas-h: 431;
   --rail-w: 140px;
-  --rail-gap: 8px;
-  --sheet-cols: 18;
+  --rail-gap: 10px;
+  --sheet-cols: 20;
   --panel-h: 345px;
-  --tab-h: 47px;
+  --tab-h: 52px;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 * {
@@ -49,7 +64,7 @@ body,
 
 body {
   background: var(--bg);
-  color: #fff;
+  color: var(--ink);
   font-family: 'Forma DJR Deck', ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
@@ -81,13 +96,19 @@ button {
 .header {
   display: flex;
   gap: 12px;
+  align-items: baseline;
   justify-content: center;
-  padding-top: 18px;
-  font-size: 16px;
+  padding-top: 22px;
+  font-size: 20px;
+}
+
+.header strong {
+  font-weight: 500;
 }
 
 .header .muted {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--ink-soft);
+  font-size: 17px;
 }
 
 /* Stage — download row, canvas, controls */
@@ -122,63 +143,34 @@ button {
   min-width: 0;
 }
 
-/* Biome rail */
-
-.biomes {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  gap: var(--rail-gap);
-  width: var(--rail-w);
-}
-
-/* Every plate sits at full strength; the only signal is the stroke, which
-   appears on hover and stays once selected. Drawn as an inset shadow rather
-   than a border so it can't shift the thumbnail's size. */
-.biome {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  background: #fff;
-  box-shadow: inset 0 0 0 0 var(--select);
-  transition: box-shadow 160ms var(--ease-out);
-}
-
-.biome img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.biome:hover,
-.biome.on {
-  box-shadow: inset 0 0 0 2px var(--select);
-}
-
 .stage-top {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 28px;
+  margin-bottom: 18px;
 }
 
+/* Round, generous hit targets rather than bare 33px glyphs. */
 .icon-btn {
   display: grid;
   place-items: center;
-  width: 33px;
-  height: 33px;
-  /* It's an <a>, so without this the icon inherits the default link blue
-     through currentColor. */
-  color: var(--dim);
-  opacity: 0.35;
-  transition: opacity 160ms var(--ease-out);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(58, 49, 40, 0.07);
+  color: var(--ink-faint);
+  transition:
+    background 180ms var(--ease-out),
+    color 180ms var(--ease-out),
+    scale 220ms var(--spring);
 }
 
 .icon-btn:not(:disabled):hover {
-  opacity: 1;
+  background: rgba(58, 49, 40, 0.13);
+  scale: 1.08;
+}
+
+.icon-btn:not(:disabled):active {
+  scale: 0.94;
 }
 
 .icon-btn:disabled {
@@ -186,7 +178,8 @@ button {
 }
 
 .icon-btn.ready {
-  opacity: 0.85;
+  background: var(--sage);
+  color: #fff;
 }
 
 /* Canvas */
@@ -195,17 +188,16 @@ button {
   position: relative;
   aspect-ratio: var(--canvas-w) / var(--canvas-h);
   width: 100%;
-  background: #fff;
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow:
+    0 2px 4px rgba(58, 49, 40, 0.06),
+    0 14px 34px rgba(58, 49, 40, 0.12);
   overflow: hidden;
   touch-action: none;
   /* Contains the placed stickers' z-indexes. Without a stacking context they
      escape into the root and cover the style menu below the canvas. */
   isolation: isolate;
-}
-
-.canvas.drop-target {
-  outline: 1px solid var(--select);
-  outline-offset: -1px;
 }
 
 .scene-img {
@@ -214,6 +206,24 @@ button {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* An empty canvas gives a child nothing to act on, so it says what to do. */
+.canvas-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  color: var(--ink-faint);
+  font-size: 22px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.canvas-empty svg {
+  opacity: 0.5;
 }
 
 /* Placed stickers */
@@ -246,101 +256,131 @@ button {
 
 .placed-frame {
   position: absolute;
-  inset: 0;
-  border: 1px solid var(--select);
+  inset: -4px;
+  border: 2.5px solid var(--select);
+  border-radius: 14px;
   pointer-events: none;
 }
 
 /* A locked sticker still shows it's selected, but offers no handles. */
 .placed-frame.locked {
   border-style: dashed;
-  border-color: rgba(13, 153, 255, 0.55);
+  border-color: rgba(201, 114, 78, 0.6);
 }
 
-.lock {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  translate: -50% 0;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: rgba(20, 20, 20, 0.85);
-  color: #fff;
-  opacity: 0;
-  transition: opacity 140ms var(--ease-out), background 140ms var(--ease-out);
-}
-
-.placed:hover .lock,
-.lock.on {
-  opacity: 1;
-}
-
-.lock.on {
-  background: var(--select);
-}
-
-.lock:hover {
-  background: rgba(20, 20, 20, 1);
-}
-
-.lock.on:hover {
-  background: #0b87e3;
-}
-
+/* Handles are 18px, not the 9px they were: a child's aim is not a designer's. */
 .handle {
   position: absolute;
-  width: 9px;
-  height: 9px;
-  border: 1px solid var(--select);
-  border-radius: 1px;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid var(--select);
+  border-radius: 50%;
   background: #fff;
   pointer-events: auto;
+  transition: scale 160ms var(--spring);
 }
 
-.handle.nw { top: -5px; left: -5px; cursor: nwse-resize; }
-.handle.ne { top: -5px; right: -5px; cursor: nesw-resize; }
-.handle.sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
-.handle.se { bottom: -5px; right: -5px; cursor: nwse-resize; }
+.handle:hover {
+  scale: 1.2;
+}
+
+.handle.nw { top: -9px; left: -9px; cursor: nwse-resize; }
+.handle.ne { top: -9px; right: -9px; cursor: nesw-resize; }
+.handle.sw { bottom: -9px; left: -9px; cursor: nesw-resize; }
+.handle.se { bottom: -9px; right: -9px; cursor: nwse-resize; }
 
 .handle.rotate {
-  top: -26px;
+  top: -38px;
   left: 50%;
   translate: -50% 0;
-  border-radius: 50%;
   cursor: grab;
 }
 
-/* Controls — style dropdown + Craft */
+/* Per-sticker actions — icons, not keyboard shortcuts a child won't find. */
+
+.sticker-tools {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 100px;
+  background: var(--ink);
+  box-shadow: 0 6px 18px rgba(58, 49, 40, 0.3);
+}
+
+.sticker-tools button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #fff;
+  transition: background 150ms var(--ease-out), scale 180ms var(--spring);
+}
+
+.sticker-tools button:hover {
+  background: rgba(255, 255, 255, 0.18);
+  scale: 1.1;
+}
+
+.sticker-tools button:active {
+  scale: 0.92;
+}
+
+.sticker-tools button.on {
+  background: var(--accent);
+}
+
+/* Sparkle burst when a sticker lands */
+
+.sparkles {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.sparkle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #ffd9a8 45%, rgba(255, 190, 120, 0) 72%);
+}
+
+/* Controls — style dropdown + the main call to action */
 
 .controls-row {
   position: relative;
   z-index: 10;
   display: flex;
-  gap: 14px;
+  gap: 16px;
   align-items: center;
   align-self: flex-end;
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
-/* Craft can be disabled for several reasons; a title tooltip alone is too
+/* The CTA can be disabled for several reasons; a title tooltip alone is too
    easy to miss, so the reason is stated next to it. */
 .craft-hint {
-  color: var(--dim-soft);
-  font-size: 14px;
+  color: var(--ink-soft);
+  font-size: 16px;
   white-space: nowrap;
 }
 
 .controls {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
   width: fit-content;
-  padding: 8px 20px;
+  padding: 10px;
   border-radius: 100px;
-  background: var(--group);
+  background: rgba(58, 49, 40, 0.07);
 }
 
 .select-style {
@@ -352,23 +392,23 @@ button {
   gap: 8px;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
-  border-radius: 1000px;
-  background: var(--chip);
-  font-size: 20px;
+  height: 56px;
+  padding: 0 22px;
+  border-radius: 100px;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 21px;
   white-space: nowrap;
+  transition: background 160ms var(--ease-out), scale 180ms var(--spring);
 }
 
-.chip.placeholder {
-  color: #fff;
-}
-
-.chip.chosen {
-  color: var(--dim);
+.chip:hover {
+  background: #fff;
+  scale: 1.03;
 }
 
 .chip svg {
-  transition: rotate 200ms var(--ease-out);
+  transition: rotate 220ms var(--ease-out);
 }
 
 .chip[aria-expanded='true'] svg {
@@ -378,39 +418,45 @@ button {
 .style-menu {
   position: absolute;
   right: 0;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 10px);
   overflow: hidden;
-  min-width: 240px;
-  border-radius: 16px;
-  background: var(--chip);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  min-width: 260px;
+  padding: 8px;
+  border-radius: var(--r-md);
+  background: var(--cream);
+  box-shadow: 0 16px 44px rgba(58, 49, 40, 0.24);
 }
 
 .style-menu button {
   display: block;
   width: 100%;
-  padding: 12px 16px;
-  color: var(--dim);
-  font-size: 16px;
+  padding: 14px 18px;
+  border-radius: var(--r-sm);
+  color: var(--ink-soft);
+  font-size: 19px;
   text-align: left;
   transition: background 140ms var(--ease-out), color 140ms var(--ease-out);
 }
 
 .style-menu button:hover,
 .style-menu button[aria-selected='true'] {
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
+  background: rgba(201, 114, 78, 0.14);
+  color: var(--ink);
 }
 
 .craft {
   display: flex;
-  gap: 4px;
+  gap: 10px;
   align-items: center;
-  padding: 8px 12px;
+  height: 56px;
+  padding: 0 26px;
   border-radius: 100px;
-  color: var(--dim);
-  font-size: 20px;
-  transition: background 200ms var(--ease-out), color 200ms var(--ease-out);
+  color: var(--ink-faint);
+  font-size: 21px;
+  transition:
+    background 200ms var(--ease-out),
+    color 200ms var(--ease-out),
+    scale 200ms var(--spring);
 }
 
 .craft:disabled {
@@ -418,37 +464,95 @@ button {
 }
 
 .craft.enabled {
-  background: #fff;
-  color: var(--bg);
+  background: var(--accent);
+  color: #fff;
   font-weight: 500;
+  box-shadow: 0 5px 0 var(--accent-deep);
+}
+
+.craft.enabled:hover {
+  scale: 1.04;
+}
+
+/* Pressing it physically depresses onto its own shadow. */
+.craft.enabled:active {
+  translate: 0 4px;
+  box-shadow: 0 1px 0 var(--accent-deep);
+}
+
+/* Biome rail */
+
+.biomes {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--rail-gap);
+  width: var(--rail-w);
+}
+
+/* Every plate sits at full strength; the only signal is the stroke, which
+   appears on hover and stays once selected. Drawn as an inset shadow rather
+   than a border so it can't shift the thumbnail's size. */
+.biome {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  background: #fff;
+  box-shadow: inset 0 0 0 0 var(--select);
+  transition: box-shadow 160ms var(--ease-out), scale 200ms var(--spring);
+}
+
+.biome img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.biome:hover {
+  scale: 1.04;
+}
+
+.biome:hover,
+.biome.on {
+  box-shadow: inset 0 0 0 3px var(--select);
 }
 
 /* Tabs + bottom panel */
 
-/* Shares the sheet's track so the tabs start exactly where the stickers do,
-   rather than sitting flush against the viewport edge. */
 .tabs {
   display: flex;
   flex-shrink: 0;
+  gap: 6px;
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
+  padding-left: 14px;
 }
 
 .tab {
-  width: 160px;
   height: var(--tab-h);
   display: flex;
   align-items: center;
-  padding-left: 20px;
-  color: var(--dim-soft);
-  font-size: 20px;
-  transition: color 160ms var(--ease-out);
+  padding: 0 26px;
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  color: var(--ink-soft);
+  font-size: 21px;
+  transition: color 160ms var(--ease-out), background 160ms var(--ease-out);
+}
+
+.tab:hover {
+  color: var(--ink);
 }
 
 .tab.active {
   background: var(--panel);
-  color: #fff;
+  color: var(--ink);
+  font-weight: 500;
 }
 
 .panel {
@@ -467,8 +571,8 @@ button {
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  border-top: 1px solid var(--line);
-  border-left: 1px solid var(--line);
+  padding: 10px 14px;
+  gap: 2px;
 }
 
 .sheet-cell {
@@ -478,23 +582,27 @@ button {
      min-content floor the 1fr tracks can't shrink below and the sheet would
      overflow its panel. */
   min-width: 0;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  transition: background 160ms var(--ease-out);
+}
+
+.sheet-cell:has(img):hover {
+  background: rgba(255, 255, 255, 0.55);
 }
 
 /* Magic stickers are atmosphere, not cast, so their cells carry the same
-   gradient the canvas uses while a scene is being generated — quiet enough to
-   read as a backdrop, and clipped so it can't bleed into neighbouring cells. */
+   gradient the canvas uses while a scene is being generated — lightened for
+   the cream sheet, and clipped so it can't bleed into neighbouring cells. */
 .sheet-cell.magic {
   --grain-blur: 14px;
 
   isolation: isolate;
   overflow: hidden;
-  background: #2b281d;
+  background: rgba(255, 255, 255, 0.42);
 }
 
 .sheet-cell.magic::before {
-  opacity: 0.5;
+  opacity: 0.42;
   animation: churn 9s ease-in-out infinite alternate;
 }
 
@@ -505,30 +613,35 @@ button {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 6px;
+  padding: 5px;
   cursor: grab;
   user-select: none;
   -webkit-user-drag: none;
-  transition: scale 180ms var(--ease-out);
+  transition: scale 200ms var(--spring), rotate 200ms var(--spring);
 }
 
 .sheet-cell img:hover {
-  scale: 1.12;
+  scale: 1.22;
+  rotate: -4deg;
 }
 
-/* Name label — white pill with a caret, anchored above the cell */
+.sheet-cell img:active {
+  scale: 1.06;
+}
+
+/* Name label — pill with a caret, anchored above the cell */
 
 .name-label {
   position: absolute;
-  bottom: calc(100% + 7px);
+  bottom: calc(100% + 8px);
   left: 50%;
   translate: -50% 0;
-  padding: 4px 12px;
-  border-radius: 8px;
-  background: #fff;
-  color: #000;
-  font-size: 12px;
-  line-height: 1.5;
+  padding: 6px 14px;
+  border-radius: 100px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
   white-space: nowrap;
   pointer-events: none;
   z-index: 3;
@@ -541,37 +654,37 @@ button {
   left: 50%;
   translate: -50% 0;
   border: 6px solid transparent;
-  border-top-color: #fff;
+  border-top-color: var(--ink);
   border-bottom: 0;
 }
 
 .canvas-note {
   position: absolute;
-  bottom: 16px;
+  bottom: 18px;
   left: 50%;
   translate: -50% 0;
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: 100px;
-  background: rgba(20, 20, 20, 0.9);
+  background: var(--ink);
   color: #fff;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .own-note {
-  max-width: 420px;
-  color: var(--dim);
-  font-size: 16px;
+  max-width: 460px;
+  color: var(--ink-soft);
+  font-size: 19px;
   text-align: center;
 }
 
 .own-note code {
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--chip);
-  font-size: 14px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(58, 49, 40, 0.1);
+  font-size: 17px;
 }
 
-/* Own stickers */
+/* Your characters */
 
 .own {
   display: grid;
@@ -584,47 +697,52 @@ button {
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-  width: 348px;
-  padding: 11px 15px;
-  border-radius: 16px;
-  background: var(--chip);
+  width: 430px;
+  padding: 12px 14px 12px 22px;
+  border-radius: 100px;
+  background: var(--cream);
+  box-shadow: 0 3px 12px rgba(58, 49, 40, 0.1);
 }
 
 .own-empty input {
   flex: 1;
   border: 0;
   background: none;
-  color: #fff;
+  color: var(--ink);
   font: inherit;
-  font-size: 16px;
+  font-size: 19px;
   outline: none;
 }
 
 .own-empty input::placeholder {
-  color: var(--dim);
+  color: var(--ink-faint);
 }
 
 .submit {
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 33px;
-  height: 33px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  color: var(--bg);
-  transition: background 200ms var(--ease-out);
+  background: rgba(58, 49, 40, 0.14);
+  color: #fff;
+  transition: background 200ms var(--ease-out), scale 200ms var(--spring);
 }
 
 .submit.ready {
-  background: #fff;
+  background: var(--accent);
+}
+
+.submit.ready:hover {
+  scale: 1.08;
 }
 
 .submit:disabled {
   cursor: not-allowed;
 }
 
-/* Once the user has custom stickers, the sheet sits above a compact input. */
+/* Once the user has custom characters, the sheet sits above a compact input. */
 
 .own-filled {
   display: flex;
@@ -642,7 +760,7 @@ button {
   display: grid;
   place-items: center;
   margin-top: auto;
-  padding: 12px 0 16px;
+  padding: 12px 0 18px;
 }
 
 /* Drag ghost */
@@ -658,10 +776,10 @@ button {
   width: calc(120px * var(--zoom));
   height: calc(120px * var(--zoom));
   object-fit: contain;
-  opacity: 0.9;
+  rotate: -5deg;
   pointer-events: none;
   translate: -50% -50%;
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 10px 20px rgba(58, 49, 40, 0.35));
 }
 
 /* Grainy loading gradient — shared by the sticker tile and the full canvas,
@@ -733,7 +851,7 @@ button {
 .grain.tile {
   --grain-blur: 9px;
 
-  border-radius: 4px;
+  border-radius: var(--r-sm);
 }
 
 .grain.full {
@@ -743,9 +861,53 @@ button {
   inset: 0;
 }
 
+/* A minute of gradient is a long time for a child, so the wait narrates
+   itself: what's happening now, and visible proof it's still working. */
+.working {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 20px;
+  color: #fff;
+  text-shadow: 0 2px 14px rgba(58, 49, 40, 0.5);
+  pointer-events: none;
+}
+
+.working-caption {
+  font-size: 30px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.working-dots {
+  display: flex;
+  gap: 10px;
+}
+
+.working-dots span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  animation: bounce 1.1s ease-in-out infinite;
+}
+
+.working-dots span:nth-child(2) { animation-delay: 0.15s; }
+.working-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.55; }
+  30% { transform: translateY(-11px); opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .grain::before,
-  .grain::after {
+  .grain::after,
+  .working-dots span,
+  .sheet-cell.magic::before {
     animation: none;
   }
 }

@@ -37,3 +37,60 @@ export function Download() {
     </svg>
   )
 }
+
+/* Per-sticker actions and empty-state art. Stroked so they read at small
+   sizes and inherit colour from whatever they sit on. */
+
+const stroke = {
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+}
+
+export function Copy() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="9" y="9" width="11" height="11" rx="2.5" {...stroke} />
+      <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" {...stroke} />
+    </svg>
+  )
+}
+
+export function Trash() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v5M14 11v5" {...stroke} />
+    </svg>
+  )
+}
+
+export function LockOpen() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="4" y="10" width="16" height="11" rx="2.5" {...stroke} />
+      <path d="M8 10V7a4 4 0 0 1 8 0" {...stroke} />
+    </svg>
+  )
+}
+
+export function LockClosed() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="4" y="10" width="16" height="11" rx="2.5" {...stroke} />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" {...stroke} />
+    </svg>
+  )
+}
+
+/** Empty-canvas hint: a hand placing something down. */
+export function DropHere() {
+  return (
+    <svg width="60" height="60" viewBox="0 0 48 48" aria-hidden="true">
+      <rect x="6" y="8" width="22" height="22" rx="5" {...stroke} strokeDasharray="4 4" />
+      <path d="M30 26l7 7m0 0l-3 .6m3-.6l-.6 3" {...stroke} />
+      <circle cx="17" cy="19" r="3.5" {...stroke} />
+    </svg>
+  )
+}
