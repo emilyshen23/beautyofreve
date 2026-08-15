@@ -45,6 +45,7 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
   const [picked, setPicked] = useState<(string | null)[]>([null, null, null])
   const [listening, setListening] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const recRef = useRef<SpeechRecognitionLike | null>(null)
 
   /* The box is never empty: an idea is always sitting in it as a placeholder,
      ready to send. Once the child types, their words take over. */
@@ -81,23 +82,45 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
   }
 
   function listen() {
+    if (listening) {
+      recRef.current?.stop()
+      return
+    }
+
     const Ctor =
       (window as unknown as Record<string, new () => SpeechRecognitionLike>).SpeechRecognition ??
       (window as unknown as Record<string, new () => SpeechRecognitionLike>).webkitSpeechRecognition
     if (!Ctor) return
 
     const rec = new Ctor()
+    recRef.current = rec
     rec.lang = 'en-US'
-    rec.interimResults = false
+    /* Interim results are the whole point: words land in the box as they're
+       spoken, so a child can see they're being heard rather than waiting in
+       silence and hoping. */
+    rec.interimResults = true
+    rec.continuous = false
+
     rec.onresult = (e: SpeechResultLike) => {
-      const said = e.results?.[0]?.[0]?.transcript
-      if (said) {
-        onChange(said)
-        cue('done')
+      let text = ''
+      let final = false
+      for (const r of Array.from(e.results ?? [])) {
+        text += r[0]?.transcript ?? ''
+        if (r.isFinal) final = true
       }
+      if (text) onChange(text.trim())
+      if (final) cue('done')
     }
-    rec.onend = () => setListening(false)
-    rec.onerror = () => setListening(false)
+
+    rec.onend = () => {
+      setListening(false)
+      recRef.current = null
+    }
+    rec.onerror = () => {
+      setListening(false)
+      recRef.current = null
+    }
+
     setListening(true)
     cue('button')
     rec.start()
@@ -131,6 +154,24 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
         <Wand />
         <span>Dream up a new character</span>
       </h2>
+
+      {listening && (
+        <motion.div
+          className="listening"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+        >
+          <span className="wave" aria-hidden="true">
+            {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+              <i key={i} style={{ animationDelay: `${i * 0.09}s` }} />
+            ))}
+          </span>
+          <span className="listening-text">
+            {value.trim() ? value : 'I’m listening…'}
+          </span>
+        </motion.div>
+      )}
 
       <div className="make-row">
         <div className="make-input">
@@ -189,10 +230,14 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
 }
 
 /* Minimal shapes for the Web Speech API, which TS doesn't ship types for. */
-type SpeechResultLike = { results?: Array<Array<{ transcript?: string }>> }
+type SpeechResultLike = {
+  results?: ArrayLike<{ isFinal?: boolean; 0?: { transcript?: string } }>
+}
 type SpeechRecognitionLike = {
   lang: string
   interimResults: boolean
+  continuous: boolean
+  stop: () => void
   onresult: (e: SpeechResultLike) => void
   onend: () => void
   onerror: () => void

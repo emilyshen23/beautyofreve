@@ -9,6 +9,7 @@ import {
 import { cue, soundOn, toggleSound } from './lib/sound'
 import Sparkles, { makeBurst, type Burst } from './components/Sparkles'
 import MakeCharacter from './components/MakeCharacter'
+import Backdrop from './components/Backdrop'
 import { flattenCanvas, CANVAS_W, CANVAS_H } from './lib/flatten'
 import { SCENE_STYLES } from '../shared/scene.js'
 import { BIOMES } from '../shared/biomes.js'
@@ -300,6 +301,8 @@ export default function App() {
 
   return (
     <div className="app">
+      <Backdrop />
+
       <header className="header">
         <strong>Reve</strong>
         <span className="muted">your home for storytelling</span>
