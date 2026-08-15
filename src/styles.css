@@ -33,8 +33,14 @@
 
   --canvas-w: 954;
   --canvas-h: 431;
-  --rail-w: 140px;
-  --rail-gap: 10px;
+
+  /* The canvas is the point of the page, so it grows past its 954px design
+     width until the available height stops it. Height governs on ordinary
+     screens; this cap only prevents it becoming absurd on very wide ones. */
+  --canvas-max: 1360px;
+
+  --rail-w: 172px;
+  --rail-gap: 12px;
   --sheet-cols: 20;
   --panel-h: 300px;
   --tab-h: 52px;
@@ -173,7 +179,7 @@ button {
   align-items: center;
   justify-content: center;
   min-height: 0;
-  padding: 20px 0 16px;
+  padding: 14px 0 12px;
 }
 
 /* The canvas and the biome rail are one unit: the whole block is centred, and
@@ -189,8 +195,8 @@ button {
   display: flex;
   flex-direction: column;
   width: min(
-    calc(954px + var(--rail-gap) + var(--rail-w)),
-    calc(100vw - 80px),
+    calc(var(--canvas-max) + var(--rail-gap) + var(--rail-w)),
+    calc(100vw / var(--zoom) - 96px),
     calc(
       (100vh / var(--zoom) - var(--chrome-h, 640px)) * 954 / 431
         + var(--rail-gap) + var(--rail-w)
@@ -214,7 +220,7 @@ button {
   flex-shrink: 0;
   gap: 10px;
   justify-content: flex-end;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 /* Round, generous hit targets rather than bare 33px glyphs. */
