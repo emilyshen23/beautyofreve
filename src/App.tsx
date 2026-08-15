@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import StickerSheet from './components/StickerSheet'
 import PlacedSticker from './components/PlacedSticker'
-import { CaretDown, ArrowUp, Download, DropHere } from './components/icons'
+import {
+  CaretDown, ArrowUp, Download, DropHere, Paw, Star, Palette, Wand, SoundOn, SoundOff,
+} from './components/icons'
+import { cue, soundOn, toggleSound } from './lib/sound'
 import Sparkles, { makeBurst, type Burst } from './components/Sparkles'
 import { flattenCanvas, CANVAS_W, CANVAS_H } from './lib/flatten'
 import { SCENE_STYLES } from '../shared/scene.js'
@@ -57,6 +60,7 @@ export default function App() {
   const [minting, setMinting] = useState(false)
   const [justMinted, setJustMinted] = useState<string | null>(null)
 
+  const [sound, setSound] = useState(soundOn())
   const [caption, setCaption] = useState(0)
   const [bursts, setBursts] = useState<Burst[]>([])
   const [ghost, setGhost] = useState<{ src: string; x: number; y: number } | null>(null)
@@ -78,6 +82,7 @@ export default function App() {
      drag-and-drop) so the ghost and the landing bounce stay under our control. */
   const startDrag = useCallback((sticker: Sticker, e: React.PointerEvent) => {
     e.preventDefault()
+    cue('pickUp')
     dragged.current = sticker
     setGhost({ src: sticker.src, x: e.clientX, y: e.clientY })
 
@@ -113,6 +118,7 @@ export default function App() {
       setSelected(item.uid)
       setScene({ status: 'idle' })
 
+      cue('drop')
       const burst = makeBurst(x + DEFAULT_SIZE / 2, y + DEFAULT_SIZE / 2)
       setBursts((b) => [...b, burst])
       setTimeout(() => setBursts((b) => b.filter((x) => x.id !== burst.id)), 1000)
@@ -129,12 +135,14 @@ export default function App() {
   /* Shared by the on-canvas toolbar and the keyboard shortcuts, so the two
      can't drift apart. Duplicates start unlocked or they'd land immovable. */
   const duplicate = useCallback((item: Placed) => {
+    cue('duplicate')
     const copy = { ...item, uid: uid(), x: item.x + 26, y: item.y + 26, locked: false }
     setPlaced((p) => [...p, copy])
     setSelected(copy.uid)
   }, [])
 
   const remove = useCallback((uidKey: string) => {
+    cue('remove')
     setPlaced((p) => p.filter((it) => it.uid !== uidKey))
     setSelected(null)
   }, [])
@@ -202,6 +210,7 @@ export default function App() {
 
   async function craft() {
     if (!canCraft) return
+    cue('bringToLife')
     setScene({ status: 'loading' })
     setSelected(null)
     try {
@@ -223,10 +232,12 @@ export default function App() {
       /* The result becomes the new backdrop and the stickers are cleared —
          they've been absorbed into the painting. Dropping more on top and
          crafting again continues from here. */
+      cue('done')
       setBackground(data.image)
       setPlaced([])
       setScene({ status: 'idle' })
     } catch (err) {
+      cue('failed')
       setScene({ status: 'error', message: (err as Error).message })
     }
   }
@@ -273,11 +284,11 @@ export default function App() {
   const craftHint = canCraft
     ? null
     : !apiOnline
-      ? 'Bringing scenes to life needs the local server'
+      ? 'Needs the local server'
       : !hasSubject
-        ? 'Bring a character to the story'
+        ? 'Drag a character up here'
         : !styleId
-          ? 'Pick a style first'
+          ? 'Pick a look first'
           : null
 
   return (
@@ -290,6 +301,15 @@ export default function App() {
       <div className="stage">
         <div className="stage-inner">
           <div className="stage-top">
+            <button
+              className="icon-btn"
+              aria-pressed={sound}
+              title={sound ? 'Turn sounds off' : 'Turn sounds on'}
+              onClick={() => setSound(toggleSound())}
+            >
+              {sound ? <SoundOn /> : <SoundOff />}
+            </button>
+
             <button
               className={`icon-btn${background ? ' ready' : ''}`}
               disabled={!background}
@@ -345,6 +365,28 @@ export default function App() {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.35 }}
                 >
+                  <div className="working-cast" aria-hidden="true">
+                    {placed.map((item, i) => (
+                      <motion.img
+                        key={item.uid}
+                        src={item.src}
+                        alt=""
+                        style={{
+                          left: `${((item.x + item.w / 2) / CANVAS_W) * 100}%`,
+                          top: `${((item.y + item.h / 2) / CANVAS_H) * 100}%`,
+                          width: `${(item.w / CANVAS_W) * 100}%`,
+                        }}
+                        animate={{ y: [0, -14, 0], rotate: [0, i % 2 ? 4 : -4, 0] }}
+                        transition={{
+                          duration: 3 + (i % 3) * 0.6,
+                          repeat: Infinity,
+                          ease: 'easeInOut',
+                          delay: i * 0.25,
+                        }}
+                      />
+                    ))}
+                  </div>
+
                   <div className="working">
                     <motion.p
                       key={caption}
@@ -368,7 +410,7 @@ export default function App() {
             {!backdrop && !placed.length && scene.status !== 'loading' && (
               <div className="canvas-empty">
                 <DropHere />
-                <span>Drag a character here to start your story</span>
+                <span>Drag a character here to begin</span>
               </div>
             )}
 
@@ -385,7 +427,10 @@ export default function App() {
                 className={`biome${biome?.id === b.id ? ' on' : ''}`}
                 aria-pressed={biome?.id === b.id}
                 title={b.label}
-                onClick={() => setBiome((cur) => (cur?.id === b.id ? null : b))}
+                onClick={() => {
+                  cue('setting')
+                  setBiome((cur) => (cur?.id === b.id ? null : b))
+                }}
               >
                 <img src={biomeSrc(b.id)} alt={b.label} draggable={false} />
               </button>
@@ -400,9 +445,13 @@ export default function App() {
               <button
                 className={`chip ${chosen ? 'chosen' : 'placeholder'}`}
                 aria-expanded={menuOpen}
-                onClick={() => setMenuOpen((o) => !o)}
+                onClick={() => {
+                  cue('button')
+                  setMenuOpen((o) => !o)
+                }}
               >
-                {chosen?.label ?? 'Select style'}
+                <Palette />
+                {chosen?.label ?? 'Pick a look'}
                 <CaretDown />
               </button>
 
@@ -420,6 +469,7 @@ export default function App() {
                         key={s.id}
                         aria-selected={s.id === styleId}
                         onClick={() => {
+                          cue('button')
                           setStyleId(s.id)
                           setMenuOpen(false)
                         }}
@@ -438,8 +488,8 @@ export default function App() {
               onClick={craft}
               title={craftHint ?? undefined}
             >
-              Bring it to life
-              <ArrowUp />
+              <Wand />
+              Bring to life
             </button>
             </div>
           </div>
@@ -447,11 +497,13 @@ export default function App() {
       </div>
 
       <div className="tabs">
-        <button className={`tab${tab === 'sheet' ? ' active' : ''}`} onClick={() => setTab('sheet')}>
-          Character sheet
+        <button className={`tab${tab === 'sheet' ? ' active' : ''}`} onClick={() => { cue('button'); setTab('sheet') }}>
+          <Paw />
+          Characters
         </button>
-        <button className={`tab${tab === 'own' ? ' active' : ''}`} onClick={() => setTab('own')}>
-          Your characters
+        <button className={`tab${tab === 'own' ? ' active' : ''}`} onClick={() => { cue('button'); setTab('own') }}>
+          <Star />
+          Mine
         </button>
       </div>
 
@@ -515,7 +567,7 @@ function MintInput({ value, onChange, onSubmit, busy }: MintProps) {
             if (ready) onSubmit()
           }
         }}
-        placeholder="Create your own character"
+        placeholder="Make your own character"
         disabled={busy}
       />
       <button className={`submit${ready ? ' ready' : ''}`} type="submit" disabled={!ready} aria-label="Create character">

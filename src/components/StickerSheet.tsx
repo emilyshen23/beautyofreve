@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { cue } from '../lib/sound'
 import type { Sticker } from '../lib/types'
 
 type Props = {
@@ -66,7 +67,11 @@ export default function StickerSheet({
           <div
             key={i}
             className={`sheet-cell${cell.magic ? ' magic' : ''}`}
-            onMouseEnter={() => sticker && setHovered(sticker.id)}
+            onMouseEnter={() => {
+              if (!sticker) return
+              cue('hoverCharacter')
+              setHovered(sticker.id)
+            }}
             onMouseLeave={() => setHovered(null)}
           >
             {sticker && (

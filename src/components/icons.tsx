@@ -94,3 +94,73 @@ export function DropHere() {
     </svg>
   )
 }
+
+/* Tab and control glyphs. Icons carry the meaning for pre-readers; the short
+   word beside them supports children who are still learning to read. */
+
+export function Paw() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <ellipse cx="12" cy="15.5" rx="5" ry="4.2" fill="currentColor" />
+      <ellipse cx="6" cy="10" rx="2.1" ry="2.7" fill="currentColor" />
+      <ellipse cx="18" cy="10" rx="2.1" ry="2.7" fill="currentColor" />
+      <ellipse cx="9.6" cy="6" rx="2" ry="2.5" fill="currentColor" />
+      <ellipse cx="14.4" cy="6" rx="2" ry="2.5" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function Star() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M12 3.2l2.5 5.4 5.9.7-4.4 4 1.2 5.8L12 16.2 6.8 19.1 8 13.3 3.6 9.3l5.9-.7L12 3.2z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
+export function Palette() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.9 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .9-1.9 2-1.9h1.3A4.7 4.7 0 0 0 21 9.9C21 6 16.9 3 12 3z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <circle cx="7.6" cy="11.6" r="1.4" fill="currentColor" />
+      <circle cx="10" cy="7.6" r="1.4" fill="currentColor" />
+      <circle cx="15" cy="7.8" r="1.4" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function Wand() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 19L15 9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M14 4.2l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1z" fill="currentColor" />
+      <path d="M19 12l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6.6-1.4z" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function SoundOn() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4v-5z" fill="currentColor" />
+      <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" {...stroke} />
+    </svg>
+  )
+}
+
+export function SoundOff() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4v-5z" fill="currentColor" />
+      <path d="M16 9.5l5 5M21 9.5l-5 5" {...stroke} />
+    </svg>
+  )
+}

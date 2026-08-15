@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Copy, Trash, LockOpen, LockClosed } from './icons'
+import { cue } from '../lib/sound'
 import type { Placed } from '../lib/types'
 
 type Props = {
@@ -35,6 +36,7 @@ export default function PlacedSticker({
     e.stopPropagation()
     onSelect()
     if (item.locked) return
+    cue('grab', 0.5)
     const el = e.currentTarget as HTMLElement
     el.setPointerCapture(e.pointerId)
     setDragging(true)
@@ -138,6 +140,7 @@ export default function PlacedSticker({
               aria-pressed={item.locked ?? false}
               onClick={(e) => {
                 e.stopPropagation()
+                cue(item.locked ? 'unlock' : 'lock')
                 onChange({ locked: !item.locked })
               }}
             >

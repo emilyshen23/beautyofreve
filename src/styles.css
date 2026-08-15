@@ -98,7 +98,7 @@ button {
   gap: 12px;
   align-items: baseline;
   justify-content: center;
-  padding-top: 22px;
+  padding-top: 20px;
   font-size: 20px;
 }
 
@@ -113,6 +113,8 @@ button {
 
 /* Stage — download row, canvas, controls */
 
+/* Equal breathing room above and below: the header and the tab strip are
+   different heights, so matching padding alone would look off-centre. */
 .stage {
   display: flex;
   flex: 1;
@@ -120,6 +122,7 @@ button {
   align-items: center;
   justify-content: center;
   min-height: 0;
+  padding: 26px 0;
 }
 
 /* The canvas and the biome rail are one unit: the whole block is centred, and
@@ -145,6 +148,7 @@ button {
 
 .stage-top {
   display: flex;
+  gap: 10px;
   justify-content: flex-end;
   margin-bottom: 18px;
 }
@@ -169,8 +173,18 @@ button {
   scale: 1.08;
 }
 
+.icon-btn {
+  box-shadow: 0 4px 0 rgba(58, 49, 40, 0.12);
+}
+
 .icon-btn:not(:disabled):active {
-  scale: 0.94;
+  translate: 0 3px;
+  scale: 1;
+  box-shadow: 0 1px 0 rgba(58, 49, 40, 0.12);
+}
+
+.icon-btn.ready {
+  box-shadow: 0 4px 0 #63755a;
 }
 
 .icon-btn:disabled {
@@ -402,9 +416,18 @@ button {
   transition: background 160ms var(--ease-out), scale 180ms var(--spring);
 }
 
+.chip {
+  box-shadow: 0 4px 0 rgba(58, 49, 40, 0.16);
+}
+
 .chip:hover {
   background: #fff;
   scale: 1.03;
+}
+
+.chip:active {
+  translate: 0 3px;
+  box-shadow: 0 1px 0 rgba(58, 49, 40, 0.16);
 }
 
 .chip svg {
@@ -549,10 +572,24 @@ button {
   color: var(--ink);
 }
 
+.tab {
+  display: flex;
+  gap: 9px;
+}
+
+.tab svg {
+  opacity: 0.55;
+}
+
 .tab.active {
   background: var(--panel);
   color: var(--ink);
   font-weight: 500;
+}
+
+.tab.active svg {
+  opacity: 1;
+  color: var(--accent);
 }
 
 .panel {
@@ -863,6 +900,22 @@ button {
 
 /* A minute of gradient is a long time for a child, so the wait narrates
    itself: what's happening now, and visible proof it's still working. */
+/* The child's own characters keep drifting while the picture is painted, so
+   the wait still belongs to them. */
+.working-cast {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+.working-cast img {
+  position: absolute;
+  translate: -50% -50%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(58, 49, 40, 0.3));
+}
+
 .working {
   position: absolute;
   inset: 0;

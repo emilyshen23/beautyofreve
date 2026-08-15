@@ -16,6 +16,7 @@
     "biomes": "node --env-file=.env server/batch-biomes.js"
   },
   "dependencies": {
+    "cuelume": "^0.2.2",
     "express": "^5.1.0",
     "framer-motion": "^12.42.2",
     "react": "^19.2.7",
