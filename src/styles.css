@@ -36,7 +36,7 @@
   --rail-w: 140px;
   --rail-gap: 10px;
   --sheet-cols: 20;
-  --panel-h: 345px;
+  --panel-h: 372px;
   --tab-h: 52px;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -157,8 +157,8 @@ button {
 .icon-btn {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 62px;
+  height: 62px;
   border-radius: 50%;
   background: rgba(58, 49, 40, 0.07);
   color: var(--ink-faint);
@@ -188,7 +188,20 @@ button {
 }
 
 .icon-btn:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Icons read at 1.3x throughout. */
+.icon-btn svg,
+.tab svg,
+.chip svg,
+.craft svg {
+  scale: 1.3;
+}
+
+.sticker-tools button svg {
+  scale: 1.25;
 }
 
 .icon-btn.ready {
@@ -328,8 +341,8 @@ button {
 .sticker-tools button {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   color: #fff;
   transition: background 150ms var(--ease-out), scale 180ms var(--spring);
@@ -545,6 +558,36 @@ button {
   box-shadow: inset 0 0 0 3px var(--select);
 }
 
+/* Day/night lives on the rail because it changes the backdrops, not the app. */
+.time-toggle {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 100px;
+  background: rgba(58, 49, 40, 0.09);
+}
+
+.time-toggle button {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  height: 38px;
+  border-radius: 100px;
+  color: var(--ink-faint);
+  transition: background 180ms var(--ease-out), color 180ms var(--ease-out);
+}
+
+.time-toggle button:hover {
+  color: var(--ink-soft);
+}
+
+.time-toggle button.on {
+  background: var(--cream);
+  color: var(--accent);
+  box-shadow: 0 2px 5px rgba(58, 49, 40, 0.14);
+}
+
 /* Tabs + bottom panel */
 
 .tabs {
@@ -729,54 +772,172 @@ button {
   height: 100%;
 }
 
-.own-empty {
+/* Dream up a new character.
+
+   The old version was one small pill floating in a large empty panel, which
+   reads as an exam. Filling the space with a title, idea shuffle, voice input
+   and word tiles turns it into a workbench — and every one of those is a way
+   to succeed without typing. */
+
+.make {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.make-title {
   display: flex;
   gap: 12px;
   align-items: center;
-  justify-content: space-between;
-  width: 430px;
-  padding: 12px 14px 12px 22px;
-  border-radius: 100px;
-  background: var(--cream);
-  box-shadow: 0 3px 12px rgba(58, 49, 40, 0.1);
+  color: var(--ink);
+  font-size: 30px;
+  font-weight: 500;
 }
 
-.own-empty input {
+.make-title svg {
+  color: var(--accent);
+  scale: 1.3;
+}
+
+.make-sub {
+  color: var(--ink-soft);
+  font-size: 18px;
+}
+
+.make.busy {
+  gap: 10px;
+}
+
+.make-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.make-input {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 470px;
+  padding: 8px 8px 8px 24px;
+  border-radius: 100px;
+  background: var(--cream);
+  box-shadow: 0 4px 0 rgba(58, 49, 40, 0.14);
+}
+
+.make-input input {
   flex: 1;
+  min-width: 0;
   border: 0;
   background: none;
   color: var(--ink);
   font: inherit;
-  font-size: 19px;
+  font-size: 20px;
   outline: none;
 }
 
-.own-empty input::placeholder {
+.make-input input::placeholder {
   color: var(--ink-faint);
 }
 
-.submit {
+.make-icon {
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: rgba(58, 49, 40, 0.14);
-  color: #fff;
-  transition: background 200ms var(--ease-out), scale 200ms var(--spring);
+  color: var(--ink-faint);
+  transition: background 160ms var(--ease-out), color 160ms var(--ease-out);
 }
 
-.submit.ready {
+.make-icon:hover {
+  background: rgba(58, 49, 40, 0.09);
+  color: var(--ink);
+}
+
+.make-icon.on {
   background: var(--accent);
+  color: #fff;
 }
 
-.submit.ready:hover {
-  scale: 1.08;
+.make-go {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 5px 0 var(--accent-deep);
+  transition: scale 200ms var(--spring);
 }
 
-.submit:disabled {
-  cursor: not-allowed;
+.make-go svg {
+  scale: 1.4;
+}
+
+.make-go:hover {
+  scale: 1.06;
+}
+
+.make-go:active {
+  translate: 0 4px;
+  box-shadow: 0 1px 0 var(--accent-deep);
+}
+
+.make-hint {
+  color: var(--ink-soft);
+  font-size: 16px;
+}
+
+/* Word tiles: tap one per row and a sentence assembles itself. */
+
+.make-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: center;
+}
+
+.make-tile-row {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tile {
+  padding: 9px 17px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--ink-soft);
+  font-size: 17px;
+  box-shadow: 0 2px 0 rgba(58, 49, 40, 0.12);
+  transition:
+    background 150ms var(--ease-out),
+    color 150ms var(--ease-out),
+    scale 180ms var(--spring);
+}
+
+.tile:hover {
+  background: #fff;
+  color: var(--ink);
+  scale: 1.05;
+}
+
+.tile:active {
+  translate: 0 2px;
+  box-shadow: none;
+}
+
+.tile.on {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 0 var(--accent-deep);
 }
 
 /* Once the user has custom characters, the sheet sits above a compact input. */
@@ -797,7 +958,17 @@ button {
   display: grid;
   place-items: center;
   margin-top: auto;
-  padding: 12px 0 18px;
+  padding: 8px 0 14px;
+}
+
+/* Beside a filled sheet the workbench is compact — the tiles would crowd it. */
+.own-filled .make-title {
+  font-size: 22px;
+}
+
+.own-filled .make-tiles,
+.own-filled .make-hint {
+  display: none;
 }
 
 /* Drag ghost */
@@ -900,20 +1071,22 @@ button {
 
 /* A minute of gradient is a long time for a child, so the wait narrates
    itself: what's happening now, and visible proof it's still working. */
-/* The child's own characters keep drifting while the picture is painted, so
-   the wait still belongs to them. */
+/* The child's own characters wait with them. Laid out in a row beneath the
+   caption — scattered at their canvas positions they covered the text — and
+   taking turns to grow, so there's always one thing moving. */
 .working-cast {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  opacity: 0.5;
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  justify-content: center;
+  height: 76px;
 }
 
 .working-cast img {
-  position: absolute;
-  translate: -50% -50%;
+  width: 58px;
+  height: 58px;
   object-fit: contain;
-  filter: drop-shadow(0 6px 14px rgba(58, 49, 40, 0.3));
+  filter: drop-shadow(0 6px 14px rgba(58, 49, 40, 0.35));
 }
 
 .working {

@@ -3,10 +3,12 @@ import { AnimatePresence, motion } from 'framer-motion'
 import StickerSheet from './components/StickerSheet'
 import PlacedSticker from './components/PlacedSticker'
 import {
-  CaretDown, ArrowUp, Download, DropHere, Paw, Star, Palette, Wand, SoundOn, SoundOff,
+  CaretDown, Download, DropHere, Paw, Star, Palette, Wand, SoundOn, SoundOff,
+  Sun, Moon, Broom,
 } from './components/icons'
 import { cue, soundOn, toggleSound } from './lib/sound'
 import Sparkles, { makeBurst, type Burst } from './components/Sparkles'
+import MakeCharacter from './components/MakeCharacter'
 import { flattenCanvas, CANVAS_W, CANVAS_H } from './lib/flatten'
 import { SCENE_STYLES } from '../shared/scene.js'
 import { BIOMES } from '../shared/biomes.js'
@@ -36,9 +38,10 @@ const BUILT_IN: Sticker[] = STICKERS.map((s: Omit<Sticker, 'src'>) => ({
 const CHARACTERS = BUILT_IN.filter((s) => !s.magic)
 const MAGIC = BUILT_IN.filter((s) => s.magic)
 
-type Biome = { id: string; label: string; scene: string }
+type Biome = { id: string; label: string; scene: string; sceneNight: string }
 const BIOME_LIST: Biome[] = BIOMES
-const biomeSrc = (id: string) => `${import.meta.env.BASE_URL}biomes/${id}.webp`
+const biomeSrc = (id: string, night = false) =>
+  `${import.meta.env.BASE_URL}biomes/${id}${night ? '-night' : ''}.webp`
 
 export default function App() {
   const [stickers] = useState<Sticker[]>(CHARACTERS)
@@ -55,9 +58,11 @@ export default function App() {
   /** The last crafted image, kept as the canvas backdrop so work can continue. */
   const [background, setBackground] = useState<string | null>(null)
   const [biome, setBiome] = useState<Biome | null>(null)
+  const [night, setNight] = useState(false)
 
   const [prompt, setPrompt] = useState('')
   const [minting, setMinting] = useState(false)
+  const [making, setMaking] = useState<string | null>(null)
   const [justMinted, setJustMinted] = useState<string | null>(null)
 
   const [sound, setSound] = useState(soundOn())
@@ -189,6 +194,7 @@ export default function App() {
     if (!name || minting) return
 
     setMinting(true)
+    setMaking(name)
     setPrompt('')
     try {
       const res = await fetch('/api/stickers/custom', {
@@ -205,6 +211,7 @@ export default function App() {
       /* surfaced by the input returning to its resting state */
     } finally {
       setMinting(false)
+      setMaking(null)
     }
   }
 
@@ -223,7 +230,7 @@ export default function App() {
           reference,
           names: [...new Set(placed.map((p) => p.name))],
           mode: craftMode,
-          setting: biome?.scene,
+          setting: biome ? (night ? biome.sceneNight : biome.scene) : undefined,
         }),
       })
       const data = await res.json()
@@ -276,7 +283,7 @@ export default function App() {
   const craftMode = background ? (placed.length ? 'add' : 'restyle') : 'compose'
   /* What is actually showing behind the stickers: a finished scene once one
      exists, otherwise the chosen biome plate. */
-  const backdrop = background ?? (biome ? biomeSrc(biome.id) : null)
+  const backdrop = background ?? (biome ? biomeSrc(biome.id, night) : null)
   const hasSubject = placed.length > 0 || Boolean(background)
   const canCraft =
     apiOnline && Boolean(styleId) && hasSubject && scene.status !== 'loading'
@@ -301,6 +308,22 @@ export default function App() {
       <div className="stage">
         <div className="stage-inner">
           <div className="stage-top">
+            <button
+              className="icon-btn"
+              disabled={!placed.length && !background && !biome}
+              title="Start again"
+              onClick={() => {
+                cue('remove')
+                setPlaced([])
+                setSelected(null)
+                setBackground(null)
+                setBiome(null)
+                setScene({ status: 'idle' })
+              }}
+            >
+              <Broom />
+            </button>
+
             <button
               className="icon-btn"
               aria-pressed={sound}
@@ -365,28 +388,6 @@ export default function App() {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.35 }}
                 >
-                  <div className="working-cast" aria-hidden="true">
-                    {placed.map((item, i) => (
-                      <motion.img
-                        key={item.uid}
-                        src={item.src}
-                        alt=""
-                        style={{
-                          left: `${((item.x + item.w / 2) / CANVAS_W) * 100}%`,
-                          top: `${((item.y + item.h / 2) / CANVAS_H) * 100}%`,
-                          width: `${(item.w / CANVAS_W) * 100}%`,
-                        }}
-                        animate={{ y: [0, -14, 0], rotate: [0, i % 2 ? 4 : -4, 0] }}
-                        transition={{
-                          duration: 3 + (i % 3) * 0.6,
-                          repeat: Infinity,
-                          ease: 'easeInOut',
-                          delay: i * 0.25,
-                        }}
-                      />
-                    ))}
-                  </div>
-
                   <div className="working">
                     <motion.p
                       key={caption}
@@ -397,9 +398,29 @@ export default function App() {
                     >
                       {WORKING_CAPTIONS[caption]}
                     </motion.p>
-                    <div className="working-dots" aria-hidden="true">
-                      <span /><span /><span />
-                    </div>
+                    {placed.length ? (
+                      <div className="working-cast" aria-hidden="true">
+                        {placed.map((item, i) => (
+                          <motion.img
+                            key={item.uid}
+                            src={item.src}
+                            alt=""
+                            animate={{ scale: [1, 1.45, 1], y: [0, -8, 0] }}
+                            transition={{
+                              duration: 1.1,
+                              repeat: Infinity,
+                              repeatDelay: Math.max(0, placed.length - 1) * 0.45,
+                              delay: i * 0.45,
+                              ease: 'easeInOut',
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="working-dots" aria-hidden="true">
+                        <span /><span /><span />
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -432,9 +453,28 @@ export default function App() {
                   setBiome((cur) => (cur?.id === b.id ? null : b))
                 }}
               >
-                <img src={biomeSrc(b.id)} alt={b.label} draggable={false} />
+                <img src={biomeSrc(b.id, night)} alt={b.label} draggable={false} />
               </button>
             ))}
+
+            <div className="time-toggle" role="group" aria-label="Time of day">
+              <button
+                className={night ? undefined : 'on'}
+                title="Daytime"
+                aria-pressed={!night}
+                onClick={() => { cue('setting'); setNight(false) }}
+              >
+                <Sun />
+              </button>
+              <button
+                className={night ? 'on' : undefined}
+                title="Night-time"
+                aria-pressed={night}
+                onClick={() => { cue('setting'); setNight(true) }}
+              >
+                <Moon />
+              </button>
+            </div>
           </div>
           </div>
 
@@ -525,54 +565,29 @@ export default function App() {
               onDragStart={startDrag}
             />
             <div className="own-bar">
-              <MintInput value={prompt} onChange={setPrompt} onSubmit={mint} busy={minting} />
+              <MakeCharacter
+                value={prompt}
+                onChange={setPrompt}
+                onSubmit={mint}
+                busy={minting}
+                makingLabel={making}
+              />
             </div>
           </div>
         ) : (
           <div className="own">
-            <MintInput value={prompt} onChange={setPrompt} onSubmit={mint} busy={minting} />
+            <MakeCharacter
+              value={prompt}
+              onChange={setPrompt}
+              onSubmit={mint}
+              busy={minting}
+              makingLabel={making}
+            />
           </div>
         )}
       </div>
 
       {ghost && <img className="ghost" src={ghost.src} alt="" style={{ left: ghost.x, top: ghost.y }} />}
     </div>
-  )
-}
-
-type MintProps = {
-  value: string
-  onChange: (v: string) => void
-  onSubmit: () => void
-  busy: boolean
-}
-
-function MintInput({ value, onChange, onSubmit, busy }: MintProps) {
-  const ready = value.trim().length > 0 && !busy
-  return (
-    <form
-      className="own-empty"
-      onSubmit={(e) => {
-        e.preventDefault()
-        onSubmit()
-      }}
-    >
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        // Belt-and-braces alongside the form's implicit submission.
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
-            if (ready) onSubmit()
-          }
-        }}
-        placeholder="Make your own character"
-        disabled={busy}
-      />
-      <button className={`submit${ready ? ' ready' : ''}`} type="submit" disabled={!ready} aria-label="Create character">
-        <ArrowUp />
-      </button>
-    </form>
   )
 }

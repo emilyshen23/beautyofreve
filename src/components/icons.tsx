@@ -164,3 +164,52 @@ export function SoundOff() {
     </svg>
   )
 }
+
+export function Sun() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.4" fill="currentColor" />
+      <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" {...stroke} />
+    </svg>
+  )
+}
+
+export function Moon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z" fill="currentColor" />
+    </svg>
+  )
+}
+
+/** Clear the canvas and start over. */
+export function Broom() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M17.5 3.5L11 10" {...stroke} />
+      <path d="M6 21l-2-2 4.5-4.5a3 3 0 0 1 4.2 0l1.8 1.8a3 3 0 0 1 0 4.2L14 21z" {...stroke} />
+      <path d="M9.2 15.4l3.4 3.4" {...stroke} />
+    </svg>
+  )
+}
+
+export function Dice() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" {...stroke} />
+      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+      <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor" />
+      <circle cx="15.5" cy="8.5" r="1.5" fill="currentColor" />
+      <circle cx="8.5" cy="15.5" r="1.5" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function Mic() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="9" y="2.8" width="6" height="11" rx="3" fill="currentColor" />
+      <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.2" {...stroke} />
+    </svg>
+  )
+}
