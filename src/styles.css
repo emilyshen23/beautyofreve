@@ -37,12 +37,12 @@
   /* The canvas is the point of the page, so it grows past its 954px design
      width until the available height stops it. Height governs on ordinary
      screens; this cap only prevents it becoming absurd on very wide ones. */
-  --canvas-max: 1360px;
+  --canvas-max: 1520px;
 
-  --rail-w: 172px;
+  --rail-w: 196px;
   --rail-gap: 12px;
   --sheet-cols: 20;
-  --panel-h: 300px;
+  --panel-h: 260px;
   --tab-h: 52px;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -97,88 +97,6 @@ button {
   height: 100%;
 }
 
-/* The craft table itself: grainy fields of gold, terracotta, deep brown and
-   sage over cream.
-
-   Two layers turn continuously in opposite directions at unrelated periods
-   (41s and 62s). A full turn rather than a back-and-forth matters: anything
-   on `alternate` visibly reverses, which reads mechanical, while two full
-   rotations that never line up read as an endless swirl.
-
-   All movement is `transform`/`translate`, which stays on the compositor —
-   animating gradient stops would repaint the whole viewport every frame. */
-
-.page-backdrop {
-  --px: 0;
-  --py: 0;
-
-  position: fixed;
-  z-index: -1;
-  /* Wider than the viewport so the parallax can never drag an edge in. */
-  inset: -60px;
-  overflow: hidden;
-  background: #f2e7d3;
-}
-
-.swirl {
-  position: absolute;
-  /* Generous enough that a full rotation never sweeps a corner into view. */
-  inset: -50%;
-  background-repeat: no-repeat;
-  transition: translate 620ms cubic-bezier(0.23, 1, 0.32, 1);
-  will-change: transform;
-}
-
-.swirl-a {
-  background:
-    radial-gradient(36% 40% at 24% 26%, #efa53c 0%, rgba(239, 165, 60, 0) 70%),
-    radial-gradient(38% 42% at 76% 20%, #cd6f45 0%, rgba(205, 111, 69, 0) 72%),
-    radial-gradient(34% 38% at 60% 74%, #f6c56a 0%, rgba(246, 197, 106, 0) 68%),
-    radial-gradient(52% 52% at 44% 46%, #fdf7ec 0%, rgba(253, 247, 236, 0) 74%);
-  animation: swirl-a 41s linear infinite;
-  translate: calc(var(--px) * 46px) calc(var(--py) * 46px);
-}
-
-.swirl-b {
-  background:
-    radial-gradient(42% 46% at 74% 76%, #8d5836 0%, rgba(141, 88, 54, 0) 70%),
-    radial-gradient(40% 44% at 22% 78%, #93a26e 0%, rgba(147, 162, 110, 0) 72%),
-    radial-gradient(36% 40% at 18% 34%, #e8913f 0%, rgba(232, 145, 63, 0) 70%);
-  opacity: 0.9;
-  animation: swirl-b 62s linear infinite;
-  /* Half the travel of the front layer, so the swirl has depth. */
-  translate: calc(var(--px) * 22px) calc(var(--py) * 22px);
-}
-
-@keyframes swirl-a {
-  from { transform: rotate(0turn) scale(1.16); }
-  50%  { transform: rotate(0.5turn) scale(1.32); }
-  to   { transform: rotate(1turn) scale(1.16); }
-}
-
-@keyframes swirl-b {
-  from { transform: rotate(1turn) scale(1.3); }
-  50%  { transform: rotate(0.5turn) scale(1.12); }
-  to   { transform: rotate(0turn) scale(1.3); }
-}
-
-/* Grain, so it reads as printed paper rather than a digital gradient. */
-.page-backdrop::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.52;
-  mix-blend-mode: multiply;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .swirl {
-    animation: none;
-    translate: none;
-  }
-}
-
 /* Header */
 
 .header {
@@ -186,7 +104,7 @@ button {
   gap: 12px;
   align-items: baseline;
   justify-content: center;
-  padding-top: 20px;
+  padding-top: 12px;
   font-size: 20px;
 }
 
@@ -210,7 +128,7 @@ button {
   align-items: center;
   justify-content: center;
   min-height: 0;
-  padding: 14px 0 12px;
+  padding: 8px 0;
 }
 
 /* The canvas and the biome rail are one unit: the whole block is centred, and
@@ -251,7 +169,7 @@ button {
   flex-shrink: 0;
   gap: 10px;
   justify-content: flex-end;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 /* Round, generous hit targets rather than bare 33px glyphs. */
@@ -491,7 +409,7 @@ button {
   align-items: center;
   align-self: flex-end;
   flex-shrink: 0;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 /* The CTA can be disabled for several reasons; a title tooltip alone is too
@@ -750,7 +668,7 @@ button {
 .panel {
   flex-shrink: 0;
   min-height: var(--panel-h);
-  padding-bottom: 12px;
+  padding-bottom: 8px;
   background: var(--panel);
 }
 
@@ -764,7 +682,7 @@ button {
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 10px 14px;
+  padding: 6px 14px;
   gap: 2px;
 }
 
