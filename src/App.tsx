@@ -7,6 +7,7 @@ import {
   Sun, Moon, Trash,
 } from './components/icons'
 import { cue, soundOn, toggleSound } from './lib/sound'
+import { useChromeHeight } from './lib/useChromeHeight'
 import Sparkles, { makeBurst, type Burst } from './components/Sparkles'
 import MakeCharacter from './components/MakeCharacter'
 import Backdrop from './components/Backdrop'
@@ -45,6 +46,8 @@ const biomeSrc = (id: string, night = false) =>
   `${import.meta.env.BASE_URL}biomes/${id}${night ? '-night' : ''}.webp`
 
 export default function App() {
+  useChromeHeight()
+
   const [stickers] = useState<Sticker[]>(CHARACTERS)
   const [custom, setCustom] = useState<Sticker[]>([])
   const [apiOnline, setApiOnline] = useState(false)
