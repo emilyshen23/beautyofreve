@@ -39,6 +39,11 @@
   --panel-h: 372px;
   --tab-h: 52px;
 
+  /* Everything above and below the canvas: header, tab strip, panel, the
+     icon row and the controls, plus their margins. Used to work out how much
+     height the canvas may take. */
+  --chrome-h: 700px;
+
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -126,14 +131,28 @@ button {
 }
 
 /* The canvas and the biome rail are one unit: the whole block is centred, and
-   the download icon and controls right-align to its combined edge. */
+   the download icon and controls right-align to its combined edge.
+
+   The third term is what keeps a short window from breaking: the canvas is
+   sized by width via aspect-ratio, so without a height bound the stage grows
+   taller than its container and spills out of both ends — clipping the icon
+   row and dropping the controls behind the sticker panel.
+
+   Note the `/ var(--zoom)`: vh is not zoom-aware. Under `html { zoom: .75 }`
+   a 700px window still reports 100vh = 700px, while the real layout height is
+   933px, so the raw value under-reports the space available by a third. */
 .stage-inner {
   display: flex;
   flex-direction: column;
   width: min(
     calc(954px + var(--rail-gap) + var(--rail-w)),
-    calc(100vw - 80px)
+    calc(100vw - 80px),
+    calc(
+      (100vh / var(--zoom) - var(--chrome-h)) * 954 / 431
+        + var(--rail-gap) + var(--rail-w)
+    )
   );
+  min-width: 480px;
 }
 
 .stage-body {
@@ -540,7 +559,14 @@ button {
   transition: box-shadow 160ms var(--ease-out), scale 200ms var(--spring);
 }
 
+/* Absolute so the thumbnails contribute no intrinsic height. In flow they
+   made the rail taller than the canvas's aspect-ratio height, and since the
+   two share a stretching flex row, the rail's height won — silently
+   overriding the canvas aspect ratio and pushing the whole stage out of
+   bounds on shorter windows. */
 .biome img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -820,8 +846,8 @@ button {
   display: flex;
   gap: 6px;
   align-items: center;
-  width: 470px;
-  padding: 8px 8px 8px 24px;
+  width: 400px;
+  padding: 14px 24px;
   border-radius: 100px;
   background: var(--cream);
   box-shadow: 0 4px 0 rgba(58, 49, 40, 0.14);
@@ -842,25 +868,39 @@ button {
   color: var(--ink-faint);
 }
 
-.make-icon {
+/* Shuffle and voice are the two ways to skip typing, so they carry the same
+   weight as the send button rather than hiding inside the field. */
+.make-tool {
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
-  color: var(--ink-faint);
-  transition: background 160ms var(--ease-out), color 160ms var(--ease-out);
+  background: var(--cream);
+  color: var(--accent);
+  box-shadow: 0 4px 0 rgba(58, 49, 40, 0.16);
+  transition: scale 200ms var(--spring), background 160ms var(--ease-out);
 }
 
-.make-icon:hover {
-  background: rgba(58, 49, 40, 0.09);
-  color: var(--ink);
+.make-tool svg {
+  scale: 1.35;
 }
 
-.make-icon.on {
+.make-tool:hover {
+  background: #fff;
+  scale: 1.07;
+}
+
+.make-tool:active {
+  translate: 0 3px;
+  box-shadow: 0 1px 0 rgba(58, 49, 40, 0.16);
+}
+
+.make-tool.on {
   background: var(--accent);
   color: #fff;
+  box-shadow: 0 4px 0 var(--accent-deep);
 }
 
 .make-go {
@@ -889,11 +929,6 @@ button {
   box-shadow: 0 1px 0 var(--accent-deep);
 }
 
-.make-hint {
-  color: var(--ink-soft);
-  font-size: 16px;
-}
-
 /* Word tiles: tap one per row and a sentence assembles itself. */
 
 .make-tiles {
@@ -911,11 +946,11 @@ button {
 }
 
 .tile {
-  padding: 9px 17px;
+  padding: 6px 13px;
   border-radius: 100px;
   background: rgba(255, 255, 255, 0.6);
   color: var(--ink-soft);
-  font-size: 17px;
+  font-size: 14px;
   box-shadow: 0 2px 0 rgba(58, 49, 40, 0.12);
   transition:
     background 150ms var(--ease-out),
@@ -966,8 +1001,7 @@ button {
   font-size: 22px;
 }
 
-.own-filled .make-tiles,
-.own-filled .make-hint {
+.own-filled .make-tiles {
   display: none;
 }
 

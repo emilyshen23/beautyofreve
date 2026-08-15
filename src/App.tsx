@@ -4,7 +4,7 @@ import StickerSheet from './components/StickerSheet'
 import PlacedSticker from './components/PlacedSticker'
 import {
   CaretDown, Download, DropHere, Paw, Star, Palette, Wand, SoundOn, SoundOff,
-  Sun, Moon, Broom,
+  Sun, Moon, Trash,
 } from './components/icons'
 import { cue, soundOn, toggleSound } from './lib/sound'
 import Sparkles, { makeBurst, type Burst } from './components/Sparkles'
@@ -321,7 +321,7 @@ export default function App() {
                 setScene({ status: 'idle' })
               }}
             >
-              <Broom />
+              <Trash />
             </button>
 
             <button

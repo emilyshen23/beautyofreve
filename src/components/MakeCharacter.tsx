@@ -137,7 +137,7 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
           <input
             ref={inputRef}
             value={value}
-            placeholder={idea}
+            placeholder={listening ? 'Listening…' : idea}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -146,28 +146,28 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
               }
             }}
           />
-          <button className="make-icon" title="Another idea" onClick={shuffle}>
-            <Dice />
-          </button>
-          {speechSupported && (
-            <button
-              className={`make-icon${listening ? ' on' : ''}`}
-              title="Say it out loud"
-              onClick={listen}
-            >
-              <Mic />
-            </button>
-          )}
         </div>
+
+        {/* Pulled out of the input and given their own weight: shuffling an
+            idea and speaking one are the two ways to skip typing entirely. */}
+        <button className="make-tool" title="Another idea" onClick={shuffle}>
+          <Dice />
+        </button>
+
+        {speechSupported && (
+          <button
+            className={`make-tool${listening ? ' on' : ''}`}
+            title="Say it out loud"
+            onClick={listen}
+          >
+            <Mic />
+          </button>
+        )}
 
         <button className="make-go" title="Make it" onClick={send}>
           <ArrowUp />
         </button>
       </div>
-
-      <p className="make-hint">
-        {listening ? 'Listening…' : 'Tap words to build one — or just press the arrow'}
-      </p>
 
       <div className="make-tiles">
         {TILES.map((row, i) => (
