@@ -20,21 +20,16 @@ import type { Placed, Sticker, SceneState } from './lib/types'
 const DEFAULT_SIZE = 120
 /* The painting is already on disk and would otherwise appear the instant the
    button is pressed, which reads as a swap rather than as painting. */
-const CRAFT_MS = 3000
+const CRAFT_MS = 5000
 /* Drawing one character is a smaller job than painting a whole scene, and
    should feel like one. */
 const MINT_MS = 2200
 const uid = () => Math.random().toString(36).slice(2, 9)
 
 /* An empty wait reads as "stuck" to a child, so it narrates what is
-   supposedly happening. */
-const WORKING_CAPTIONS = [
-  'Mixing the colors…',
-  'Waking up your characters…',
-  'Painting the sky…',
-  'Adding the tiny details…',
-  'Almost there…',
-]
+   supposedly happening. Two lines over the whole wait: any more and the text
+   changes faster than a five-year-old can read it. */
+const WORKING_CAPTIONS = ['Mixing the colors…', 'Waking up your characters…']
 
 /* The 72 built-ins are committed static assets, so the sheet is available
    without a backend — that's what makes the static deploy worth anything.
