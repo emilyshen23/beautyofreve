@@ -194,8 +194,8 @@ button {
   width: 62px;
   height: 62px;
   border-radius: 50%;
-  background: rgba(58, 49, 40, 0.07);
-  color: var(--ink-faint);
+  background: rgba(58, 49, 40, 0.1);
+  color: var(--ink-soft);
   transition:
     background 180ms var(--ease-out),
     color 180ms var(--ease-out),
@@ -221,17 +221,26 @@ button {
   box-shadow: 0 4px 0 #63755a;
 }
 
+/* Faded rather than recoloured, so a dimmed button is obviously the same
+   control — just not available yet. */
 .icon-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.32;
   cursor: not-allowed;
 }
 
 /* Icons read at 1.3x throughout. */
-.icon-btn svg,
 .tab svg,
 .chip svg,
 .craft svg {
   scale: 1.3;
+}
+
+/* The three top-bar glyphs are drawn at different intrinsic sizes (17, 22 and
+   33), so the box is set here instead — otherwise the download read far
+   larger than its neighbours. */
+.icon-btn svg {
+  width: 26px;
+  height: 26px;
 }
 
 .sticker-tools button svg {
