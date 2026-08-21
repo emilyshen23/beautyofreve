@@ -1,9 +1,9 @@
 // Five nature backdrops the story can be set in. Each is generated once and
 // shipped as a static plate, so switching between them is instant.
 //
-// Each also has a `-night` plate. Those are colour-graded from the day plate
-// rather than generated, because the image API is currently closed; swap them
-// for real night generations when it reopens.
+// Each also has a `-night` plate, generated separately rather than derived
+// from the day plate, so night scenes get a real moon, stars and lantern
+// light instead of a blue tint.
 //
 // The plates are deliberately calm and uncluttered: they are a stage, not the
 // show. Characters get dropped on top and will not blend at first — that is

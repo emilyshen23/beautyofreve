@@ -298,7 +298,7 @@ export default function App() {
       : !hasSubject
         ? 'Drag a character up here'
         : !styleId
-          ? 'Pick a look first'
+          ? 'Pick a style first'
           : null
 
   return (
@@ -494,7 +494,7 @@ export default function App() {
                 }}
               >
                 <Palette />
-                {chosen?.label ?? 'Pick a look'}
+                {chosen?.label ?? 'Pick a style'}
                 <CaretDown />
               </button>
 
