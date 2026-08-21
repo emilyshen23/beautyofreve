@@ -27,9 +27,9 @@
   --select: #c9724e;
   --line: rgba(58, 49, 40, 0.16);
 
-  --r-lg: 26px;
-  --r-md: 16px;
-  --r-sm: 10px;
+  --r-lg: 16px;
+  --r-md: 10px;
+  --r-sm: 7px;
 
   --canvas-w: 954;
   --canvas-h: 431;
@@ -304,7 +304,7 @@ button {
   position: absolute;
   inset: -4px;
   border: 2.5px solid var(--select);
-  border-radius: 14px;
+  border-radius: 9px;
   pointer-events: none;
 }
 
