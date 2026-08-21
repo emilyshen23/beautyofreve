@@ -29,8 +29,6 @@ export type Placed = {
 }
 
 /* The finished image lives in its own `background` state rather than here,
-   since it persists as the canvas backdrop across further rounds. */
-export type SceneState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
+   since it persists as the canvas backdrop across further rounds. There is no
+   failure state: crafting resolves to a painting that already exists. */
+export type SceneState = { status: 'idle' } | { status: 'loading' }

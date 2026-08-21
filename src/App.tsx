@@ -10,21 +10,24 @@ import { cue, cueDrop, soundOn, toggleSound } from './lib/sound'
 import { useChromeHeight } from './lib/useChromeHeight'
 import Sparkles, { makeBurst, type Burst } from './components/Sparkles'
 import MakeCharacter from './components/MakeCharacter'
-import { flattenCanvas, CANVAS_W, CANVAS_H } from './lib/flatten'
+import { CANVAS_W, CANVAS_H } from './lib/flatten'
 import { SCENE_STYLES } from '../shared/scene.js'
 import { BIOMES } from '../shared/biomes.js'
 import { STICKERS } from '../shared/stickers.js'
-import { matchDemo, DEMO_SCENES } from '../shared/demo.js'
+import { matchDemo, matchDemoCharacter, DEMO_SCENES, DEMO_CHARACTERS } from '../shared/demo.js'
 import type { Placed, Sticker, SceneState } from './lib/types'
 
 const DEFAULT_SIZE = 120
-/* A saved scene appears instantly, which reads as a cheat rather than as
-   painting. The wait is kept, just shortened to the length of a held breath. */
-const DEMO_CRAFT_MS = 3600
+/* The painting is already on disk and would otherwise appear the instant the
+   button is pressed, which reads as a swap rather than as painting. */
+const CRAFT_MS = 3000
+/* Drawing one character is a smaller job than painting a whole scene, and
+   should feel like one. */
+const MINT_MS = 2200
 const uid = () => Math.random().toString(36).slice(2, 9)
 
-/* A craft takes about a minute. Left as a bare gradient that reads as "stuck"
-   to a child, so the wait narrates what is supposedly happening. */
+/* An empty wait reads as "stuck" to a child, so it narrates what is
+   supposedly happening. */
 const WORKING_CAPTIONS = [
   'Mixing the colors…',
   'Waking up your characters…',
@@ -53,7 +56,6 @@ export default function App() {
 
   const [stickers] = useState<Sticker[]>(CHARACTERS)
   const [custom, setCustom] = useState<Sticker[]>([])
-  const [apiOnline, setApiOnline] = useState(false)
   const [tab, setTab] = useState<'sheet' | 'own'>('sheet')
 
   const [placed, setPlaced] = useState<Placed[]>([])
@@ -62,8 +64,6 @@ export default function App() {
   const [styleId, setStyleId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [scene, setScene] = useState<SceneState>({ status: 'idle' })
-  /** True while a pre-rendered scene is "painting" — captions run faster. */
-  const [replaying, setReplaying] = useState(false)
   /** The last crafted image, kept as the canvas backdrop so work can continue. */
   const [background, setBackground] = useState<string | null>(null)
   const [biome, setBiome] = useState<Biome | null>(null)
@@ -94,20 +94,19 @@ export default function App() {
     }
     // Same reasoning for the saved scenes: the reveal has to land the moment
     // the wait ends, not after a fetch.
-    for (const d of DEMO_SCENES) {
+    for (const d of [...DEMO_SCENES, ...DEMO_CHARACTERS]) {
       const img = new Image()
       img.src = `${import.meta.env.BASE_URL}${d.image}`
     }
   }, [])
 
+  /* Characters made in an earlier session, if the backend is up. Its absence
+     is not an error: everything on screen works without it. */
   useEffect(() => {
     fetch('/api/stickers')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no backend'))))
-      .then((d) => {
-        setCustom(d.custom ?? [])
-        setApiOnline(true)
-      })
-      .catch(() => setApiOnline(false))
+      .then((d) => setCustom(d.custom ?? []))
+      .catch(() => {})
   }, [])
 
   /* Drag from the sheet onto the canvas. Pointer events (rather than HTML5
@@ -190,10 +189,10 @@ export default function App() {
     setCaption(0)
     const id = setInterval(
       () => setCaption((c) => Math.min(c + 1, WORKING_CAPTIONS.length - 1)),
-      replaying ? 1100 : 11000,
+      Math.round(CRAFT_MS / WORKING_CAPTIONS.length),
     )
     return () => clearInterval(id)
-  }, [scene.status, replaying])
+  }, [scene.status])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -228,6 +227,25 @@ export default function App() {
     setMinting(true)
     setMaking(name)
     setPrompt('')
+
+    /* Already drawn — see shared/demo.js. Sits through the same wait so it
+       arrives the way a freshly drawn one would. */
+    const saved = matchDemoCharacter(name)
+    if (saved) {
+      await new Promise((r) => setTimeout(r, MINT_MS))
+      // Suffixed so asking twice adds two stickers rather than colliding.
+      const id = `${saved.id}-${uid()}`
+      setCustom((c) => [
+        ...c,
+        { id, name: saved.name, src: `${import.meta.env.BASE_URL}${saved.image}`, custom: true },
+      ])
+      setJustMinted(id)
+      setTimeout(() => setJustMinted(null), 2600)
+      setMinting(false)
+      setMaking(null)
+      return
+    }
+
     try {
       const res = await fetch('/api/stickers/custom', {
         method: 'POST',
@@ -247,53 +265,24 @@ export default function App() {
     }
   }
 
+  /* Every arrangement resolves to a painting that has already been made —
+     see shared/demo.js. There is no request: the wait, the captions and the
+     bouncing cast are the whole of it. */
   async function craft() {
-    if (!canCraft) return
+    if (!canCraft || !demo) return
     cue('bringToLife')
     setScene({ status: 'loading' })
     setSelected(null)
 
-    /* This arrangement has been crafted before and the result is on disk, so
-       replay it rather than paying for it again. The wait, the captions and
-       the bouncing cast are all real — only the API call is skipped. */
-    if (demo) {
-      setReplaying(true)
-      await new Promise((r) => setTimeout(r, DEMO_CRAFT_MS))
-      cue('done')
-      setBackground(`${import.meta.env.BASE_URL}${demo.image}`)
-      setPlaced([])
-      setScene({ status: 'idle' })
-      setReplaying(false)
-      return
-    }
+    await new Promise((r) => setTimeout(r, CRAFT_MS))
 
-    try {
-      const reference = await flattenCanvas(placed, backdrop)
-      const res = await fetch('/api/craft', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          styleId,
-          reference,
-          names: [...new Set(placed.map((p) => p.name))],
-          mode: craftMode,
-          setting: biome ? (night ? biome.sceneNight : biome.scene) : undefined,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-
-      /* The result becomes the new backdrop and the stickers are cleared —
-         they've been absorbed into the painting. Dropping more on top and
-         crafting again continues from here. */
-      cue('done')
-      setBackground(data.image)
-      setPlaced([])
-      setScene({ status: 'idle' })
-    } catch (err) {
-      cue('failed')
-      setScene({ status: 'error', message: (err as Error).message })
-    }
+    /* The painting becomes the new backdrop and the stickers are cleared —
+       they've been absorbed into it. Dropping more on top and crafting again
+       continues from here. */
+    cue('done')
+    setBackground(`${import.meta.env.BASE_URL}${demo.image}`)
+    setPlaced([])
+    setScene({ status: 'idle' })
   }
 
   async function downloadPng() {
@@ -325,26 +314,19 @@ export default function App() {
 
   const chosen = SCENE_STYLES.find((s) => s.id === styleId)
 
-  /* With a scene already on the canvas and no new stickers, Craft restyles it
-     — otherwise picking a different style after a craft would do nothing. */
-  const craftMode = background ? (placed.length ? 'add' : 'restyle') : 'compose'
   /* What is actually showing behind the stickers: a finished scene once one
      exists, otherwise the chosen biome plate. */
   const backdrop = background ?? (biome ? biomeSrc(biome.id, night) : null)
   const hasSubject = placed.length > 0 || Boolean(background)
-  /* A saved arrangement can be crafted with the backend down or out of
-     credits — that is the whole point of having them. */
   const demo = matchDemo(placed, { biomeId: biome?.id, night })
-  const canCraft =
-    (apiOnline || Boolean(demo)) &&
-    Boolean(styleId) && hasSubject && scene.status !== 'loading'
+  const canCraft = Boolean(demo && styleId) && hasSubject && scene.status !== 'loading'
 
   const craftHint = canCraft
     ? null
-    : !apiOnline
-      ? 'Needs the local server'
-      : !hasSubject
-        ? 'Drag a character up here'
+    : !hasSubject
+      ? 'Drag a character up here'
+      : !demo
+        ? 'Try the forest, the reef or the desert'
         : !styleId
           ? 'Pick a style first'
           : null
@@ -491,7 +473,6 @@ export default function App() {
               </div>
             )}
 
-            {scene.status === 'error' && <p className="canvas-note">{scene.message}</p>}
           </div>
 
           {/* Switching biomes just swaps the plate behind the stickers. They
@@ -606,12 +587,6 @@ export default function App() {
       <div className="panel">
         {tab === 'sheet' ? (
           <StickerSheet stickers={stickers} magic={MAGIC} onDragStart={startDrag} />
-        ) : !apiOnline ? (
-          <div className="own">
-            <p className="own-note">
-              Making characters needs the local server. Run <code>npm run dev</code> to create your own.
-            </p>
-          </div>
         ) : custom.length || minting ? (
           <div className="own-filled">
             <StickerSheet

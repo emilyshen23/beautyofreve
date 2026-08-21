@@ -35,6 +35,10 @@ type Props = {
 export default function MakeCharacter({ value, onChange, onSubmit, busy, makingLabel }: Props) {
   const [ideaIndex, setIdeaIndex] = useState(() => Math.floor(Math.random() * IDEAS.length))
   const [typed, setTyped] = useState('')
+  /* Bumped by the dice. The typing loop runs off its own local index, so
+     without something in the dependency list to restart it, rolling a new
+     idea changed a ref the loop had already read past and nothing happened. */
+  const [roll, setRoll] = useState(0)
   const [listening, setListening] = useState(false)
   // Kept in a ref so the typing loop can advance without restarting itself.
   const ideaIndexRef = useRef(ideaIndex)
@@ -106,15 +110,18 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
       cancelled = true
       timers.forEach(clearTimeout)
     }
-  }, [idle])
+  }, [idle, roll])
 
   function shuffle() {
     cue('button')
+    // Anywhere in the list except where we already are, so every roll visibly
+    // lands on something new.
     const next = (ideaIndexRef.current + 1 + Math.floor(Math.random() * (IDEAS.length - 1))) % IDEAS.length
     ideaIndexRef.current = next
     setIdeaIndex(next)
     setTyped('')
     onChange('')
+    setRoll((n) => n + 1)
   }
 
   function listen() {
