@@ -8,20 +8,25 @@ import { motion } from 'framer-motion'
  * Offsets are generated once per burst and passed in, so a re-render can't
  * reshuffle particles mid-flight.
  */
-export type Burst = { id: string; x: number; y: number; seeds: number[] }
+export type Tone = 'plain' | 'magic' | 'mischief'
+export type Burst = { id: string; x: number; y: number; seeds: number[]; tone: Tone }
 
 const COUNT = 10
 
-export const makeBurst = (x: number, y: number): Burst => ({
+export const makeBurst = (x: number, y: number, tone: Tone = 'plain'): Burst => ({
   id: Math.random().toString(36).slice(2, 9),
   x,
   y,
+  tone,
   seeds: Array.from({ length: COUNT }, () => Math.random()),
 })
 
 export default function Sparkles({ burst }: { burst: Burst }) {
   return (
-    <div className="sparkles" style={{ left: burst.x, top: burst.y, right: 'auto', bottom: 'auto' }}>
+    <div
+      className={`sparkles tone-${burst.tone}`}
+      style={{ left: burst.x, top: burst.y, right: 'auto', bottom: 'auto' }}
+    >
       {burst.seeds.map((seed, i) => {
         const angle = (i / COUNT) * Math.PI * 2 + seed
         const distance = 34 + seed * 30

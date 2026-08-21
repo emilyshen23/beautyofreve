@@ -6,7 +6,7 @@ import {
   CaretDown, Download, DropHere, Paw, Star, Palette, Wand, SoundOn, SoundOff,
   Sun, Moon, Trash,
 } from './components/icons'
-import { cue, soundOn, toggleSound } from './lib/sound'
+import { cue, cueDrop, soundOn, toggleSound } from './lib/sound'
 import { useChromeHeight } from './lib/useChromeHeight'
 import Sparkles, { makeBurst, type Burst } from './components/Sparkles'
 import MakeCharacter from './components/MakeCharacter'
@@ -126,8 +126,13 @@ export default function App() {
       setSelected(item.uid)
       setScene({ status: 'idle' })
 
-      cue('drop')
-      const burst = makeBurst(x + DEFAULT_SIZE / 2, y + DEFAULT_SIZE / 2)
+      const tone = sticker.magic
+        ? 'magic'
+        : sticker.mood === 'mischievous'
+          ? 'mischief'
+          : 'plain'
+      cueDrop(tone)
+      const burst = makeBurst(x + DEFAULT_SIZE / 2, y + DEFAULT_SIZE / 2, tone)
       setBursts((b) => [...b, burst])
       setTimeout(() => setBursts((b) => b.filter((x) => x.id !== burst.id)), 1000)
     }

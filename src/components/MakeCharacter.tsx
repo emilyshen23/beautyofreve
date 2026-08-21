@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowUp, Wand, Dice, Mic } from './icons'
 import { cue } from '../lib/sound'
 
@@ -23,14 +23,6 @@ const IDEAS = [
   'a star that fell asleep',
 ]
 
-/* Tap one from each row and you have a sentence. Zero typing, and it quietly
-   teaches the shape of a good prompt. */
-const TILES = [
-  ['a sleepy', 'a tiny', 'a rainbow', 'a giant', 'a silly'],
-  ['dragon', 'turtle', 'robot', 'kitten', 'monster'],
-  ['wearing a hat', 'made of candy', 'with big wings', 'covered in stars'],
-]
-
 type Props = {
   value: string
   onChange: (v: string) => void
@@ -42,7 +34,6 @@ type Props = {
 
 export default function MakeCharacter({ value, onChange, onSubmit, busy, makingLabel }: Props) {
   const [ideaIndex, setIdeaIndex] = useState(() => Math.floor(Math.random() * IDEAS.length))
-  const [picked, setPicked] = useState<(string | null)[]>([null, null, null])
   const [listening, setListening] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const recRef = useRef<SpeechRecognitionLike | null>(null)
@@ -61,24 +52,20 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
     [],
   )
 
+  /* The suggestion cycles on its own, so a child always has a fresh idea in
+     front of them without touching anything. It pauses the moment they start
+     typing or speaking — swapping the text under them would be maddening. */
+  const idle = !value.trim() && !listening && !busy
   useEffect(() => {
-    // Tiles compose into the box as they're tapped.
-    const phrase = picked.filter(Boolean).join(' ')
-    if (phrase) onChange(phrase)
-    // onChange is stable enough here; re-running on it would fight typing.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [picked])
+    if (!idle) return
+    const id = setInterval(() => setIdeaIndex((i) => (i + 1) % IDEAS.length), 3000)
+    return () => clearInterval(id)
+  }, [idle])
 
   function shuffle() {
     cue('button')
     setIdeaIndex((i) => (i + 1 + Math.floor(Math.random() * (IDEAS.length - 1))) % IDEAS.length)
-    setPicked([null, null, null])
     onChange('')
-  }
-
-  function tapTile(row: number, word: string) {
-    cue('button')
-    setPicked((p) => p.map((cur, i) => (i === row ? (cur === word ? null : word) : cur)))
   }
 
   function listen() {
@@ -175,10 +162,31 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
 
       <div className="make-row">
         <div className="make-input">
+          {/* A real placeholder can't be animated, so the idea is rendered
+              behind the field and cross-faded instead.
+
+              Deliberately not mode="wait": the incoming idea should appear as
+              soon as it changes, crossfading over the outgoing one rather than
+              waiting for it to leave. They're absolutely positioned, so they
+              overlap cleanly. */}
+          {!value && (
+            <AnimatePresence initial={false}>
+              <motion.span
+                key={listening ? 'listening' : idea}
+                className="make-ghost"
+                initial={{ opacity: 0, y: 9 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -9 }}
+                transition={{ duration: 0.34, ease: [0.23, 1, 0.32, 1] }}
+              >
+                {listening ? 'Listening…' : idea}
+              </motion.span>
+            </AnimatePresence>
+          )}
+
           <input
             ref={inputRef}
             value={value}
-            placeholder={listening ? 'Listening…' : idea}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -210,21 +218,6 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
         </button>
       </div>
 
-      <div className="make-tiles">
-        {TILES.map((row, i) => (
-          <div key={i} className="make-tile-row">
-            {row.map((word) => (
-              <button
-                key={word}
-                className={`tile${picked[i] === word ? ' on' : ''}`}
-                onClick={() => tapTile(i, word)}
-              >
-                {word}
-              </button>
-            ))}
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
