@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ArrowUp, Wand, Dice, Mic } from './icons'
 import { cue } from '../lib/sound'
 
@@ -34,7 +34,10 @@ type Props = {
 
 export default function MakeCharacter({ value, onChange, onSubmit, busy, makingLabel }: Props) {
   const [ideaIndex, setIdeaIndex] = useState(() => Math.floor(Math.random() * IDEAS.length))
+  const [typed, setTyped] = useState('')
   const [listening, setListening] = useState(false)
+  // Kept in a ref so the typing loop can advance without restarting itself.
+  const ideaIndexRef = useRef(ideaIndex)
   const inputRef = useRef<HTMLInputElement>(null)
   const recRef = useRef<SpeechRecognitionLike | null>(null)
 
@@ -52,19 +55,65 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
     [],
   )
 
-  /* The suggestion cycles on its own, so a child always has a fresh idea in
-     front of them without touching anything. It pauses the moment they start
-     typing or speaking — swapping the text under them would be maddening. */
+  /* The suggestion writes itself out a few characters at a time, holds, then
+     clears and moves on — so the box always shows a fresh idea without the
+     text ever snapping into place. It pauses the moment the child starts
+     typing or speaking; changing the words under them would be maddening. */
   const idle = !value.trim() && !listening && !busy
+
   useEffect(() => {
-    if (!idle) return
-    const id = setInterval(() => setIdeaIndex((i) => (i + 1) % IDEAS.length), 3000)
-    return () => clearInterval(id)
+    if (!idle) {
+      setTyped('')
+      return
+    }
+
+    let cancelled = false
+    const timers: ReturnType<typeof setTimeout>[] = []
+    const wait = (ms: number) => new Promise<void>((r) => timers.push(setTimeout(r, ms)))
+
+    const run = async () => {
+      let i = ideaIndexRef.current
+      while (!cancelled) {
+        const text = IDEAS[i]
+
+        // Write it on in small bursts, which reads as typing rather than a
+        // progress bar filling.
+        for (let n = 0; n <= text.length && !cancelled; n += 1 + Math.floor(Math.random() * 3)) {
+          setTyped(text.slice(0, Math.min(n, text.length)))
+          await wait(38 + Math.random() * 34)
+        }
+        if (cancelled) return
+        setTyped(text)
+
+        await wait(3000)
+        if (cancelled) return
+
+        // Rub it out quickly before the next one arrives.
+        for (let n = text.length; n >= 0 && !cancelled; n -= 3) {
+          setTyped(text.slice(0, Math.max(n, 0)))
+          await wait(14)
+        }
+
+        i = (i + 1) % IDEAS.length
+        ideaIndexRef.current = i
+        setIdeaIndex(i)
+        await wait(160)
+      }
+    }
+
+    run()
+    return () => {
+      cancelled = true
+      timers.forEach(clearTimeout)
+    }
   }, [idle])
 
   function shuffle() {
     cue('button')
-    setIdeaIndex((i) => (i + 1 + Math.floor(Math.random() * (IDEAS.length - 1))) % IDEAS.length)
+    const next = (ideaIndexRef.current + 1 + Math.floor(Math.random() * (IDEAS.length - 1))) % IDEAS.length
+    ideaIndexRef.current = next
+    setIdeaIndex(next)
+    setTyped('')
     onChange('')
   }
 
@@ -138,7 +187,6 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
   return (
     <div className="make">
       <h2 className="make-title">
-        <Wand />
         <span>Dream up a new character</span>
       </h2>
 
@@ -162,26 +210,12 @@ export default function MakeCharacter({ value, onChange, onSubmit, busy, makingL
 
       <div className="make-row">
         <div className="make-input">
-          {/* A real placeholder can't be animated, so the idea is rendered
-              behind the field and cross-faded instead.
-
-              Deliberately not mode="wait": the incoming idea should appear as
-              soon as it changes, crossfading over the outgoing one rather than
-              waiting for it to leave. They're absolutely positioned, so they
-              overlap cleanly. */}
+          {/* A real placeholder can't be typed into, so the suggestion is
+              rendered behind the field instead. */}
           {!value && (
-            <AnimatePresence initial={false}>
-              <motion.span
-                key={listening ? 'listening' : idea}
-                className="make-ghost"
-                initial={{ opacity: 0, y: 9 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -9 }}
-                transition={{ duration: 0.34, ease: [0.23, 1, 0.32, 1] }}
-              >
-                {listening ? 'Listening…' : idea}
-              </motion.span>
-            </AnimatePresence>
+            <span className="make-ghost">
+              {listening ? 'Listening…' : typed}
+            </span>
           )}
 
           <input

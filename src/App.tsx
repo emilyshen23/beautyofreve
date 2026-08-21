@@ -76,6 +76,18 @@ export default function App() {
   const canvasRef = useRef<HTMLDivElement>(null)
   const clipboard = useRef<Placed | null>(null)
 
+  /* Both plates for every backdrop are fetched and decoded up front. Without
+     this the first switch to night shows a blank frame while the new file
+     loads, which is what made toggling feel abrupt. */
+  useEffect(() => {
+    for (const b of BIOME_LIST) {
+      for (const isNight of [false, true]) {
+        const img = new Image()
+        img.src = biomeSrc(b.id, isNight)
+      }
+    }
+  }, [])
+
   useEffect(() => {
     fetch('/api/stickers')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no backend'))))
@@ -359,17 +371,22 @@ export default function App() {
             onPointerDown={() => setSelected(null)}
             style={{ ['--canvas-w' as string]: CANVAS_W, ['--canvas-h' as string]: CANVAS_H }}
           >
-            {backdrop && (
-              <motion.img
-                key={backdrop}
-                className="scene-img"
-                src={backdrop}
-                alt={background ? 'Crafted scene' : (biome?.label ?? '')}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
-              />
-            )}
+            {/* Both plates stay mounted through the change, so day/night
+                crossfades instead of cutting to an empty canvas and back. */}
+            <AnimatePresence initial={false}>
+              {backdrop && (
+                <motion.img
+                  key={backdrop}
+                  className="scene-img"
+                  src={backdrop}
+                  alt={background ? 'Crafted scene' : (biome?.label ?? '')}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
+                />
+              )}
+            </AnimatePresence>
 
             {/* Stickers sit on top of any crafted backdrop, so more can be
                 added and the whole thing crafted again. */}
